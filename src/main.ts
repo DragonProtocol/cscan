@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpAdapterHost } from '@nestjs/core';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { subCeramic } from './base/base.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,7 +23,7 @@ async function bootstrap() {
 
   // const { httpAdapter } = app.get(HttpAdapterHost);
   // app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
-
+  await subCeramic()
   await app.listen(3000);
 }
 bootstrap();

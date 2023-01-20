@@ -15,49 +15,45 @@ export class BaseService {
   private readonly logger = new Logger(BaseService.name);
 
   constructor() {
-    this.subCeramic();
-  }
-
-  async subCeramic() {
-    // Known peers addresses
-    const bootstrapMultiaddrs = [
-      '/dns4/go-ipfs-ceramic-public-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmWiY3CbNawZjWnHXx3p3DXsg21pZYTj4CRY1iwMkhP8r3',
-      '/dns4/go-ipfs-ceramic-public-clay-external.ceramic.network/tcp/4011/ws/p2p/QmSqeKpCYW89XrHHxtEQEWXmznp6o336jzwvdodbrGeLTk',
-      '/dns4/go-ipfs-ceramic-private-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmQotCKxiMWt935TyCBFTN23jaivxwrZ3uD58wNxeg5npi',
-      '/dns4/go-ipfs-ceramic-private-cas-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmbeBTzSccH8xYottaYeyVX8QsKyox1ExfRx7T1iBqRyCd',
-    ];
-
-    const node = await createLibp2p({
-      peerDiscovery: [
-        bootstrap({
-          list: bootstrapMultiaddrs, // provide array of multiaddrs
-        }),
-      ],
-      connectionManager: {
-        autoDial: true, // Auto connect to discovered peers (limited by ConnectionManager minConnections)
-        // The `tag` property will be searched when creating the instance of your Peer Discovery service.
-        // The associated object, will be passed to the service when it is instantiated.
-      },
-      addresses: {
-        listen: ['/ip4/127.0.0.1/tcp/20000/ws'],
-      },
-      transports: [webSockets()],
-      streamMuxers: [mplex()],
-      connectionEncryption: [noise()],
-      pubsub: floodsub(),
-    });
-    const topic = '/ceramic/testnet-clay';
-    node.pubsub.subscribe(topic);
-    node.pubsub.addEventListener('message', (evt) => {
-      console.log(
-        `node received: ${deserialize(evt.detail.data)} on topic ${
-          evt.detail.topic
-        }`,
-      );
-    });
   }
 }
+export const subCeramic = async () => {
+  // Known peers addresses
+  const bootstrapMultiaddrs = [
+    '/dns4/go-ipfs-ceramic-public-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmWiY3CbNawZjWnHXx3p3DXsg21pZYTj4CRY1iwMkhP8r3',
+    '/dns4/go-ipfs-ceramic-public-clay-external.ceramic.network/tcp/4011/ws/p2p/QmSqeKpCYW89XrHHxtEQEWXmznp6o336jzwvdodbrGeLTk',
+    '/dns4/go-ipfs-ceramic-private-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmQotCKxiMWt935TyCBFTN23jaivxwrZ3uD58wNxeg5npi',
+    '/dns4/go-ipfs-ceramic-private-cas-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmbeBTzSccH8xYottaYeyVX8QsKyox1ExfRx7T1iBqRyCd',
+  ];
 
+  const node = await createLibp2p({
+    peerDiscovery: [
+      bootstrap({
+        list: bootstrapMultiaddrs, // provide array of multiaddrs
+      }),
+    ],
+    connectionManager: {
+      autoDial: true, // Auto connect to discovered peers (limited by ConnectionManager minConnections)
+      // The `tag` property will be searched when creating the instance of your Peer Discovery service.
+      // The associated object, will be passed to the service when it is instantiated.
+    },
+    addresses: {
+      listen: ['/ip4/127.0.0.1/tcp/20000/ws'],
+    },
+    transports: [webSockets()],
+    streamMuxers: [mplex()],
+    connectionEncryption: [noise()],
+    pubsub: floodsub(),
+  });
+  const topic = '/ceramic/testnet-clay';
+  node.pubsub.subscribe(topic);
+  node.pubsub.addEventListener('message', (evt) => {
+    console.log(
+      `node received: ${deserialize(evt.detail.data)} on topic ${evt.detail.topic
+      }`,
+    );
+  });
+}
 /**
  * Ceramic Pub/Sub message type.
  */
