@@ -97,8 +97,5 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "preset": "jest-puppeteer"
-  },
-  "engines": {
-    "node": "v16.16.0"
   }
 }
