@@ -1,23 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createLibp2p } from 'libp2p';
-import { webSockets } from '@libp2p/websockets';
-import { mplex } from '@libp2p/mplex';
-import { noise } from '@chainsafe/libp2p-noise';
-import { floodsub } from '@libp2p/floodsub';
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
-import { bootstrap } from '@libp2p/bootstrap';
-import { StreamID } from '@ceramicnetwork/streamid';
 import { CID } from 'multiformats/cid';
-import { UnreachableCaseError, toCID } from '@ceramicnetwork/common';
+import { StreamID } from '@ceramicnetwork/streamid';
 
+import { _importDynamic } from '../utils/import';
 @Injectable()
 export class BaseService {
   private readonly logger = new Logger(BaseService.name);
 
-  constructor() {
-  }
+  constructor() {}
 }
 export const subCeramic = async () => {
+  const { createLibp2p } = await _importDynamic('libp2p');
+  const { webSockets } = await _importDynamic('@libp2p/websockets');
+  const { noise } = await _importDynamic('@chainsafe/libp2p-noise');
+  const { mplex } = await _importDynamic('@libp2p/mplex');
+  const { floodsub } = await _importDynamic('@libp2p/floodsub');
+  const { bootstrap } = await _importDynamic('@libp2p/bootstrap');
+
+  //----------------------------------------
+
   // Known peers addresses
   const bootstrapMultiaddrs = [
     '/dns4/go-ipfs-ceramic-public-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmWiY3CbNawZjWnHXx3p3DXsg21pZYTj4CRY1iwMkhP8r3',
@@ -47,13 +49,11 @@ export const subCeramic = async () => {
   });
   const topic = '/ceramic/testnet-clay';
   node.pubsub.subscribe(topic);
-  node.pubsub.addEventListener('message', (evt) => {
-    console.log(
-      `node received: ${deserialize(evt.detail.data)} on topic ${evt.detail.topic
-      }`,
-    );
+  node.pubsub.addEventListener('message', async (evt) => {
+    const message = await deserialize(evt.detail.data);
+    console.log(`node received: ${message} on topic ${evt.detail.topic}`);
   });
-}
+};
 /**
  * Ceramic Pub/Sub message type.
  */
@@ -96,7 +96,12 @@ export type PubsubMessage =
   | ResponseMessage
   | KeepaliveMessage;
 
-export function deserialize(message: any): PubsubMessage {
+export async function deserialize(message: any): Promise<PubsubMessage> {
+  const { UnreachableCaseError, toCID } = await _importDynamic(
+    '@ceramicnetwork/common',
+  );
+  const { StreamID } = await _importDynamic('@ceramicnetwork/streamid');
+
   const textDecoder = new TextDecoder('utf-8');
   const asString = textDecoder.decode(message.data);
   const parsed = JSON.parse(asString);

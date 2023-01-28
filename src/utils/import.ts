@@ -1,0 +1,1 @@
+export const _importDynamic = new Function('modulePath', 'return import(modulePath)');
