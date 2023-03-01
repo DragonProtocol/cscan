@@ -18,7 +18,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.use("*", function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "https://scan.s3.xyz");
+    res.header("Access-Control-Allow-Origin", "*.s3.xyz");
     res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
     res.header("Access-Control-Allow-Credentials", true);
