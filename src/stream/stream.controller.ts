@@ -15,12 +15,12 @@ import {
   ConvertToStreamsReponseDto,
   StreamDto,
 } from './dtos/stream.dto';
-
+const _importDynamic = new Function('modulePath', 'return import(modulePath)');
 @ApiTags('/')
 @Controller('/')
 export class StreamController {
   private readonly logger = new Logger(StreamController.name);
-  constructor(private readonly streamService: StreamService) {}
+  constructor(private readonly streamService: StreamService) { }
 
   @Get('/streams')
   @ApiQuery({
@@ -77,5 +77,26 @@ export class StreamController {
       );
     }
     return new BasicMessageDto('ok', 0, ConvertToStream(stream));
+  }
+
+  @Get('/:network/streams/:streamId/info')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getStreamInfo(
+    @Param('streamId') streamId: string,
+    @Param('network') network: Network,
+  ): Promise<BasicMessageDto> {
+    // Currently only suport testnet
+    const Ceramic = await _importDynamic('@ceramicnetwork/http-client');
+    if (network == Network.TESTNET) {
+      const ceramicClient = new Ceramic.CeramicClient(
+        'https://ceramic-clay.3boxlabs.com',
+      );
+      const stream = await ceramicClient.loadStream(streamId);
+      return new BasicMessageDto('ok', 0, {
+        state: stream?.state,
+        content: stream?.content,
+      });
+    }
+    return new BasicMessageDto('ok', 0, {});
   }
 }
