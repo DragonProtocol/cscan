@@ -24,13 +24,13 @@ export default class ModelService {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'LOWER(stream_content::name) LIKE :nameValue';
+      whereSql += `LOWER(stream_content->>'name') LIKE :nameValue`;
     }
     if (description?.trim().length > 0) {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'LOWER(stream_content::description) LIKE :descriptionValue';
+      whereSql += `LOWER(stream_content->>'description') LIKE :descriptionValue`;
     }
 
     if (startTimeMs > 0) {

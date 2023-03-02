@@ -55,7 +55,6 @@ export class ModelController {
     );
     if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
 
-    // TODO add use count
     const models = metaModels.map((m) => m.getStreamId);
     const useCountMap = await this.streamService.findModelUseCount(
       Network.TESTNET,
