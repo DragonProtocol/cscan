@@ -66,7 +66,7 @@ export class ModelController {
       0,
       metaModels.map((m) => ({
         ...m,
-        userCount: useCountMap?.get(m.getStreamId) ?? 0,
+        useCount: useCountMap?.get(m.getStreamId) ?? 0,
       })),
     );
   }
