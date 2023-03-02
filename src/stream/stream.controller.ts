@@ -10,15 +10,17 @@ import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Network, Stream } from '../entities/stream/stream.entity';
 import StreamService from './stream.service';
 import { BasicMessageDto } from './dtos/common.dto';
-import { ConvertToStream, ConvertToStreamsReponseDto, StreamDto } from './dtos/stream.dto';
+import {
+  ConvertToStream,
+  ConvertToStreamsReponseDto,
+  StreamDto,
+} from './dtos/stream.dto';
 
 @ApiTags('/')
 @Controller('/')
 export class StreamController {
   private readonly logger = new Logger(StreamController.name);
-  constructor(
-    private readonly streamService: StreamService,
-  ) { }
+  constructor(private readonly streamService: StreamService) {}
 
   @Get('/streams')
   @ApiQuery({
@@ -48,8 +50,18 @@ export class StreamController {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
 
-    const streams = await this.streamService.findStreams(network, familyOrApp, did, pageSize, pageNumber);
-    return new BasicMessageDto('ok', 0, ConvertToStreamsReponseDto(streams, 0, 0));
+    const streams = await this.streamService.findStreams(
+      network,
+      familyOrApp,
+      did,
+      pageSize,
+      pageNumber,
+    );
+    return new BasicMessageDto(
+      'ok',
+      0,
+      ConvertToStreamsReponseDto(streams, 0, 0),
+    );
   }
 
   @Get('/:network/streams/:streamId')
