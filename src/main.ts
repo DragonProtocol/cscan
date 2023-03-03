@@ -4,7 +4,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Network } from './entities/stream/stream.entity';
 import CeramicSubscriberService from './stream/ceramic.subscriber.service';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -17,28 +16,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  app.use('*', function (req, res, next) {
-    res.header('Access-Control-Allow-Origin', 'https://scan.s3.xyz');
-    res.header(
-      'Access-Control-Allow-Headers',
-      'Content-Type,Content-Length, Authorization, Accept,X-Requested-With',
-    );
-    res.header('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Credentials', true);
-    if (req.method == 'OPTIONS') {
-      res.send(200);
-    } else {
-      next();
-    }
-  });
-
-  app.use(
-    '/api/*',
-    createProxyMiddleware({
-      target: 'https://ceramic-private-clay.3boxlabs.com',
-      changeOrigin: true,
-    }),
-  );
+  app.enableCors();
 
   await app.listen(3000);
 
