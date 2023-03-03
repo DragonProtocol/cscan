@@ -140,7 +140,7 @@ export class ModelController {
     }
 
     //2 Deploy My Composite
-    let doRetryTimes = 1;
+    let doRetryTimes = 2;
     do {
       try {
         this.logger.log('Deploying the composite...');
