@@ -15,7 +15,7 @@ import {
   ConvertToStreamsReponseDto,
   StreamDto,
 } from './dtos/stream.dto';
-const _importDynamic = new Function('modulePath', 'return import(modulePath)');
+import { importDynamic } from 'src/common/utils';
 @ApiTags('/')
 @Controller('/')
 export class StreamController {
@@ -86,7 +86,7 @@ export class StreamController {
     @Param('network') network: Network,
   ): Promise<BasicMessageDto> {
     // Currently only suport testnet
-    const Ceramic = await _importDynamic('@ceramicnetwork/http-client');
+    const Ceramic = await importDynamic('@ceramicnetwork/http-client');
     if (network == Network.TESTNET) {
       const ceramicClient = new Ceramic.CeramicClient(
         'https://ceramic-clay.3boxlabs.com',
