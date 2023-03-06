@@ -124,39 +124,42 @@ export class ModelController {
 
     //1 Create My Composite
     let composite;
+    let doRetryTimes = 2;
+    do {
+      try {
+        this.logger.log('Creating the composite...');
+        composite = await Composite.create({
+          ceramic: ceramic,
+          schema: dto.graphql,
+        });
+        doRetryTimes = 0;
+        this.logger.log(
+          `Creating the composite... Done! The encoded representation:`,
+        );
+        this.logger.log(composite);
+      } catch (e) {
+        this.logger.error((e as Error).message);
+        this.logger.log(
+          `Creating the composite... retry ${doRetryTimes} times`,
+        );
+        doRetryTimes--;
+      }
+    } while (doRetryTimes > 0);
+
+    //2 Deploy My Composite
     try {
-      this.logger.log('Creating the composite...');
-      composite = await Composite.create({
-        ceramic: ceramic,
-        schema: dto.graphql,
-      });
+      this.logger.log('Deploying the composite...');
+      // Notify the Ceramic node to index the models present in the composite
+      await composite.startIndexingOn(ceramic);
+      // Logging the model stream IDs to stdout, so that they can be piped using standard I/O or redirected to a file
       this.logger.log(
-        `Creating the composite... Done! The encoded representation:`,
+        JSON.stringify(Object.keys(composite.toParams().definition.models)),
       );
-      this.logger.log(composite);
+      this.logger.log(`Deploying the composite... Done!`);
     } catch (e) {
       this.logger.error((e as Error).message);
       throw new ServiceUnavailableException((e as Error).message);
     }
-
-    //2 Deploy My Composite
-    let doRetryTimes = 2;
-    do {
-      try {
-        this.logger.log('Deploying the composite...');
-        // Notify the Ceramic node to index the models present in the composite
-        await composite.startIndexingOn(ceramic);
-        doRetryTimes = 0;
-        // Logging the model stream IDs to stdout, so that they can be piped using standard I/O or redirected to a file
-        this.logger.log(
-          JSON.stringify(Object.keys(composite.toParams().definition.models)),
-        );
-        this.logger.log(`Deploying the composite... Done!`);
-      } catch (e) {
-        this.logger.error((e as Error).message);
-        doRetryTimes--;
-      }
-    } while (doRetryTimes > 0);
 
     //3 Compile My Composite
     let runtimeDefinition;
