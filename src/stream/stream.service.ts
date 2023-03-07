@@ -10,7 +10,7 @@ export default class StreamService {
   constructor(
     @InjectRepository(Stream)
     private readonly streamRepository: StreamRepository,
-  ) { }
+  ) {}
 
   async findByStreamId(network: Network, streamId: string): Promise<Stream> {
     return await this.streamRepository.findOne({

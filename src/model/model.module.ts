@@ -11,4 +11,4 @@ import { StreamModule } from '../stream/stream.module';
   providers: [ModelService],
   exports: [ModelService],
 })
-export class ModelModule { }
+export class ModelModule {}

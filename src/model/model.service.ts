@@ -11,7 +11,7 @@ export default class ModelService {
   constructor(
     @InjectRepository(MetaModel)
     private readonly metaModelRepository: MetaModelRepository,
-  ) { }
+  ) {}
 
   async findModelsByIds(streamIds: string[]): Promise<MetaModel[]> {
     return this.metaModelRepository.find({

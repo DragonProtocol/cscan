@@ -75,9 +75,10 @@ export class ModelController {
         'ok',
         0,
         metaModels.map((m) => ({
-          ...m,
+            ...m,
           useCount: useCountMap?.get(m.getStreamId) ?? 0,
-        })),
+          }))
+          .sort((a, b) => b.useCount - a.useCount),
       );
     }
 

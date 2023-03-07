@@ -20,7 +20,7 @@ import { importDynamic } from 'src/common/utils';
 @Controller('/')
 export class StreamController {
   private readonly logger = new Logger(StreamController.name);
-  constructor(private readonly streamService: StreamService) { }
+  constructor(private readonly streamService: StreamService) {}
 
   @Get('/streams')
   @ApiQuery({
