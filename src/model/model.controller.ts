@@ -50,11 +50,36 @@ export class ModelController {
     @Query('name') name?: string,
     @Query('description') description?: string,
     @Query('startTimeMs') startTimeMs: number = 0,
+    @Query('useCounting') useCounting?: boolean,
     @Query('pageSize') pageSize?: number,
     @Query('pageNumber') pageNumber?: number,
   ): Promise<BasicMessageDto> {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
+    this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
+
+    if (useCounting) {
+      const useCountMap =
+        await this.streamService.findModelUseCountOrderByUseCount(
+          Network.TESTNET,
+          pageSize,
+          pageNumber,
+        );
+      if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
+
+      const metaModels = await this.modelService.findModelsByIds(
+        Array.from(useCountMap.keys()),
+      );
+      if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
+      return new BasicMessageDto(
+        'ok',
+        0,
+        metaModels.map((m) => ({
+          ...m,
+          useCount: useCountMap?.get(m.getStreamId) ?? 0,
+        })),
+      );
+    }
 
     const metaModels = await this.modelService.findModels(
       pageSize,

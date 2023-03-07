@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MetaModel } from '../entities/model/model.entity';
 import { MetaModelRepository } from '../entities/model/model.repository';
+import { In } from 'typeorm';
 
 @Injectable()
 export default class ModelService {
@@ -11,6 +12,12 @@ export default class ModelService {
     @InjectRepository(MetaModel)
     private readonly metaModelRepository: MetaModelRepository,
   ) { }
+
+  async findModelsByIds(streamIds: string[]): Promise<MetaModel[]> {
+    return this.metaModelRepository.find({
+      where: { stream_id: In(streamIds) },
+    });
+  }
 
   async findModels(
     pageSize: number,
