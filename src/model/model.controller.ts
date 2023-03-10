@@ -58,8 +58,10 @@ export class ModelController {
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
     this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
 
-    if (useCounting) {
+    // hard code for searching name 
+    if (!name) {
       const models = await this.modelService.findAllModelIds();
+      this.logger.log(`All model count: ${models?.length}`);
       const useCountMap =
         await this.streamService.findModelUseCountOrderByUseCount(
           Network.TESTNET,
