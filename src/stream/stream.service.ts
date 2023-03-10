@@ -10,7 +10,7 @@ export default class StreamService {
   constructor(
     @InjectRepository(Stream)
     private readonly streamRepository: StreamRepository,
-  ) {}
+  ) { }
 
   async findByStreamId(network: Network, streamId: string): Promise<Stream> {
     return await this.streamRepository.findOne({
@@ -77,6 +77,7 @@ export default class StreamService {
     network: Network,
     pageSize: number,
     pageNumber: number,
+    models: string[],
   ): Promise<Map<string, number>> {
     const useCountMap = new Map<string, number>();
 
@@ -85,6 +86,9 @@ export default class StreamService {
       .select(['streams.model, count(streams.stream_id) as count'])
       .where('network=:network', {
         network: network,
+      })
+      .andWhere('model IN (:...models)', {
+        models: models,
       })
       .groupBy('streams.model')
       .limit(pageSize)

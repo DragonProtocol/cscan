@@ -11,12 +11,20 @@ export default class ModelService {
   constructor(
     @InjectRepository(MetaModel)
     private readonly metaModelRepository: MetaModelRepository,
-  ) {}
+  ) { }
 
   async findModelsByIds(streamIds: string[]): Promise<MetaModel[]> {
     return this.metaModelRepository.find({
       where: { stream_id: In(streamIds) },
     });
+  }
+
+  async findAllModelIds(): Promise<string[]> {
+    const result = await this.metaModelRepository
+      .createQueryBuilder('streams')
+      .select(['streams.stream_id'])
+      .getRawMany();
+    return result.map((r) => r['stream_id']);
   }
 
   async findModels(

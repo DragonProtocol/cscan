@@ -59,11 +59,13 @@ export class ModelController {
     this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
 
     if (useCounting) {
+      const models = await this.modelService.findAllModelIds();
       const useCountMap =
         await this.streamService.findModelUseCountOrderByUseCount(
           Network.TESTNET,
           pageSize,
           pageNumber,
+          models,
         );
       if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
 
@@ -75,9 +77,9 @@ export class ModelController {
         'ok',
         0,
         metaModels.map((m) => ({
-            ...m,
+          ...m,
           useCount: useCountMap?.get(m.getStreamId) ?? 0,
-          }))
+        }))
           .sort((a, b) => b.useCount - a.useCount),
       );
     }
