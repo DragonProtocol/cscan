@@ -21,8 +21,8 @@ export default class ModelService {
 
   async findAllModelIds(): Promise<string[]> {
     const result = await this.metaModelRepository
-      .createQueryBuilder('streams')
-      .select(['streams.stream_id'])
+      .createQueryBuilder()
+      .select(['stream_id'])
       .getRawMany();
     return result.map((r) => r['stream_id']);
   }
