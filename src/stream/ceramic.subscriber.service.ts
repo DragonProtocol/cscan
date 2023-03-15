@@ -19,45 +19,64 @@ export default class CeramicSubscriberService {
     topic: string,
     ceramicNetworkUrl: string,
   ) {
-    // const node = await this.createP2PNode(bootstrapMultiaddrs, listen);
-    // node.pubsub.subscribe(topic);
+    const node = await this.createP2PNode(bootstrapMultiaddrs, listen);
+    node.pubsub.subscribe(topic);
 
     const ceramic = await this.createCeramicClient(ceramicNetworkUrl);
-    // node.pubsub.addEventListener('message', async (message) => {
-    //   try {
-    //     const textDecoder = new TextDecoder('utf-8');
-    //     const asString = textDecoder.decode(message.detail.data);
-    //     const parsed = JSON.parse(asString);
-    //     if (parsed.typ == 0) {
-    //       // MsgType: UPDATE
-    //       await this.store(ceramic, network, parsed.stream);
-    //     } else if (parsed.typ == 2) {
-    //       // MsgType: RESPONSE
-    //       const streamIds = Object.keys(parsed.tips);
-    //       await Promise.all(
-    //         streamIds?.map(async (streamId) => {
-    //           await this.store(ceramic, network, streamId);
-    //         }),
-    //       );
-    //     }
-    //   } catch (error) {
-    //     this.logger.error(
-    //       `ceramic sub err, messgage:${message} error:${error}`,
-    //     );
-    //   }
-    // });
-
-    const stream = await ceramic.loadStream('kjzl6kcym7w8ya4ewg7f8rugmtncwo5ldkgiydbgre1nbxat0szb8kb7114a3f1');
-
-    console.log(stream.id.cid);
-
-    const ipfsHttpClient = await _importDynamic('ipfs-http-client');
-
-    const ipfs = ipfsHttpClient.create({
-      url: 'https://ipfs.io',
+    node.pubsub.addEventListener('message', async (message) => {
+      try {
+        const textDecoder = new TextDecoder('utf-8');
+        const asString = textDecoder.decode(message.detail.data);
+        const parsed = JSON.parse(asString);
+        if (parsed.typ == 0) {
+          // MsgType: UPDATE
+          await this.store(ceramic, network, parsed.stream);
+        } else if (parsed.typ == 2) {
+          // MsgType: RESPONSE
+          const streamIds = Object.keys(parsed.tips);
+          await Promise.all(
+            streamIds?.map(async (streamId) => {
+              await this.store(ceramic, network, streamId);
+            }),
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `ceramic sub err, messgage:${message} error:${error}`,
+        );
+      }
     });
-    const dagResult = await ipfs.dag.get(stream.id.cid);
-    console.log(dagResult);
+  }
+
+  async getCacao(cid: any): Promise<any> {
+    let cacaoDag;
+    try {
+      const ipfsHttpClient = await _importDynamic('ipfs-http-client');
+      const ipfs = await ipfsHttpClient.create({
+        url: 'https://ipfs.io',
+      });
+
+      const genesisDag = await ipfs.dag.get(cid, { timeout: 6000 });
+
+      if (!genesisDag?.value) return
+
+      const { base64urlToJSON } = await _importDynamic('@ceramicnetwork/common');
+      const decodedProtectedHeader = base64urlToJSON(genesisDag.value.signatures[0].protected);
+      const capIPFSUri = decodedProtectedHeader.cap
+      if (!capIPFSUri) return;
+
+      const { CID } = await _importDynamic('multiformats/cid');
+      const cacaoCid = CID.parse(capIPFSUri.replace('ipfs://', ''))
+      if (!cacaoCid) return;
+
+      cacaoDag = await ipfs.dag.get(cacaoCid);
+    } catch (error) {
+      this.logger.warn(
+        `get Cacao err, cid:${cid} error:${error}`,
+      );
+    }
+
+    return cacaoDag;
   }
 
   async createP2PNode(bootstrapMultiaddrs: string[], listen: string[]) {
@@ -102,6 +121,7 @@ export default class CeramicSubscriberService {
       streamId,
       stream.allCommitIds,
       stream.state,
+      stream.id.cid
     );
     // save schema stream
     if (stream?.metadata?.schema) {
@@ -132,13 +152,22 @@ export default class CeramicSubscriberService {
     streamId: string,
     commitIds: string[],
     streamState: any,
+    genesisCid?: any,
   ) {
     try {
+      let domian: string;
+      if (genesisCid) {
+        this.logger.log(`To store stream(${streamId})  network:${network}`);
+        const cacao = await this.getCacao(genesisCid);
+        domian = cacao?.value?.p?.domain;
+      }
+
       const stream = this.convertToStreamEntity(
         network,
         streamId,
         commitIds,
         streamState,
+        domian
       );
       if (!stream) return;
 
@@ -162,6 +191,7 @@ export default class CeramicSubscriberService {
     streamId: string,
     commitIds: string[],
     streamState: any,
+    domain?: string,
   ): Stream {
     const stream = new Stream();
     stream.setStreamId = streamId;
@@ -190,6 +220,10 @@ export default class CeramicSubscriberService {
     stream.setCommitIds = commitIds?.map((id) =>
       id.toString().replace('CommitID(', '').replace(')', ''),
     );
+    if (domain) {
+      this.logger.log(`The stream(${streamId}) has the domain:${domain}`);
+      stream.setDomain = domain;
+    }
     stream.setContent = streamState.content;
     stream.setMetadata = streamState.metadata;
     stream.setOriginData = JSON.parse(JSON.stringify(streamState));

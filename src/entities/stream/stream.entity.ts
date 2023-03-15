@@ -66,6 +66,10 @@ export class Stream extends BaseEntity {
 
   @Column({ nullable: true })
   private model: string;
+  
+  @Index()
+  @Column({ nullable: true })
+  private domain: string;
 
   @Column({
     type: 'text',
@@ -127,6 +131,13 @@ export class Stream extends BaseEntity {
   }
   set setStreamId(streamId: string) {
     this.stream_id = streamId;
+  }
+
+  get getDomain(): string {
+    return this.domain;
+  }
+  set setDomain(domain: string) {
+    this.domain = domain;
   }
 
   get getDid(): string {

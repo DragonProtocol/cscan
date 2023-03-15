@@ -34,16 +34,16 @@ async function bootstrap() {
     '/ceramic/testnet-clay',
     'https://ceramic-clay.3boxlabs.com',
   );
-  // // Sub ceramic main network.
-  // await ceramicSubscriberService.SubCeramic(
-  //   Network.MAINNET,
-  //   [
-  //     '/dns4/go-ipfs-ceramic-private-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmXALVsXZwPWTUbsT8G6VVzzgTJaAWRUD7FWL5f7d5ubAL',
-  //     '/dns4/go-ipfs-ceramic-private-cas-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmUvEKXuorR7YksrVgA7yKGbfjWHuCRisw2cH9iqRVM9P8',
-  //   ],
-  //   ['/ip4/127.0.0.1/tcp/30000/ws'],
-  //   '/ceramic/mainnet',
-  //   'https://ceramic.passport-iam.gitcoin.co/',
-  // );
+  // Sub ceramic main network.
+  await ceramicSubscriberService.SubCeramic(
+    Network.MAINNET,
+    [
+      '/dns4/go-ipfs-ceramic-private-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmXALVsXZwPWTUbsT8G6VVzzgTJaAWRUD7FWL5f7d5ubAL',
+      '/dns4/go-ipfs-ceramic-private-cas-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmUvEKXuorR7YksrVgA7yKGbfjWHuCRisw2cH9iqRVM9P8',
+    ],
+    ['/ip4/127.0.0.1/tcp/30000/ws'],
+    '/ceramic/mainnet',
+    'https://ceramic.passport-iam.gitcoin.co/',
+  );
 }
 bootstrap();
