@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Network, Status, Stream } from '../entities/stream/stream.entity';
 import { StreamRepository } from '../entities/stream/stream.repository';
-
 const _importDynamic = new Function('modulePath', 'return import(modulePath)');
 
 @Injectable()
@@ -12,7 +11,7 @@ export default class CeramicSubscriberService {
   constructor(
     @InjectRepository(Stream)
     private readonly streamRepository: StreamRepository,
-  ) {}
+  ) { }
   async SubCeramic(
     network: Network,
     bootstrapMultiaddrs: string[],
@@ -20,33 +19,45 @@ export default class CeramicSubscriberService {
     topic: string,
     ceramicNetworkUrl: string,
   ) {
-    const node = await this.createP2PNode(bootstrapMultiaddrs, listen);
-    node.pubsub.subscribe(topic);
+    // const node = await this.createP2PNode(bootstrapMultiaddrs, listen);
+    // node.pubsub.subscribe(topic);
 
     const ceramic = await this.createCeramicClient(ceramicNetworkUrl);
-    node.pubsub.addEventListener('message', async (message) => {
-      try {
-        const textDecoder = new TextDecoder('utf-8');
-        const asString = textDecoder.decode(message.detail.data);
-        const parsed = JSON.parse(asString);
-        if (parsed.typ == 0) {
-          // MsgType: UPDATE
-          await this.store(ceramic, network, parsed.stream);
-        } else if (parsed.typ == 2) {
-          // MsgType: RESPONSE
-          const streamIds = Object.keys(parsed.tips);
-          await Promise.all(
-            streamIds?.map(async (streamId) => {
-              await this.store(ceramic, network, streamId);
-            }),
-          );
-        }
-      } catch (error) {
-        this.logger.error(
-          `ceramic sub err, messgage:${message} error:${error}`,
-        );
-      }
+    // node.pubsub.addEventListener('message', async (message) => {
+    //   try {
+    //     const textDecoder = new TextDecoder('utf-8');
+    //     const asString = textDecoder.decode(message.detail.data);
+    //     const parsed = JSON.parse(asString);
+    //     if (parsed.typ == 0) {
+    //       // MsgType: UPDATE
+    //       await this.store(ceramic, network, parsed.stream);
+    //     } else if (parsed.typ == 2) {
+    //       // MsgType: RESPONSE
+    //       const streamIds = Object.keys(parsed.tips);
+    //       await Promise.all(
+    //         streamIds?.map(async (streamId) => {
+    //           await this.store(ceramic, network, streamId);
+    //         }),
+    //       );
+    //     }
+    //   } catch (error) {
+    //     this.logger.error(
+    //       `ceramic sub err, messgage:${message} error:${error}`,
+    //     );
+    //   }
+    // });
+
+    const stream = await ceramic.loadStream('kjzl6kcym7w8ya4ewg7f8rugmtncwo5ldkgiydbgre1nbxat0szb8kb7114a3f1');
+
+    console.log(stream.id.cid);
+
+    const ipfsHttpClient = await _importDynamic('ipfs-http-client');
+
+    const ipfs = ipfsHttpClient.create({
+      url: 'https://ipfs.io',
     });
+    const dagResult = await ipfs.dag.get(stream.id.cid);
+    console.log(dagResult);
   }
 
   async createP2PNode(bootstrapMultiaddrs: string[], listen: string[]) {
