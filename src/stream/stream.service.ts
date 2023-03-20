@@ -30,7 +30,7 @@ export default class StreamService {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'family=:familyOrApp';
+      whereSql += 'family=:familyOrApp OR domain=:familyOrApp';
     }
     if (did?.trim().length > 0) {
       if (whereSql.length > 0) {
