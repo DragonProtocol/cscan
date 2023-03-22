@@ -91,7 +91,7 @@ export class ModelController {
       pageSize,
       pageNumber,
       name,
-      did
+      did,
       description,
       startTimeMs,
     );
