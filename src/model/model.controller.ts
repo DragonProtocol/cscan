@@ -117,11 +117,11 @@ export class ModelController {
   }
 
   getCeramicNode(network: Network) {
-    return network == Network.TESTNET ? process.env.CERAMIC_NODE : process.env.CERAMIC_NODE_MAINET;
+    return network == Network.MAINNET ? process.env.CERAMIC_NODE_MAINET : process.env.CERAMIC_NODE;
   }
 
   getCeramicNodeAdminKey(network: Network) {
-    return network == Network.TESTNET ? process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY : process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY_MAINNET;
+    return network == Network.MAINNET ? process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY_MAINNET : process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY;
   }
 
   @ApiOkResponse({ type: BasicMessageDto })
