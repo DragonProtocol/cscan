@@ -31,6 +31,7 @@ export default class ModelService {
     pageSize: number,
     pageNumber: number,
     name?: string,
+    did?: string,
     description?: string,
     startTimeMs?: number,
   ): Promise<MetaModel[]> {
@@ -40,6 +41,12 @@ export default class ModelService {
         whereSql += ' AND ';
       }
       whereSql += `LOWER(stream_content->>'name') LIKE :nameValue`;
+    }
+    if (did?.trim().length > 0) {
+      if (whereSql.length > 0) {
+        whereSql += ' AND ';
+      }
+      whereSql += `controller_did=:did`;
     }
     if (description?.trim().length > 0) {
       if (whereSql.length > 0) {
@@ -61,6 +68,7 @@ export default class ModelService {
         nameValue: '%' + name?.toLowerCase() + '%',
         descriptionValue: '%' + description?.toLowerCase() + '%',
         startTime: new Date(Number(startTimeMs)),
+        did: did,
       })
       .limit(pageSize)
       .offset(pageSize * (pageNumber - 1))

@@ -48,6 +48,7 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   async getStreams(
     @Query('name') name?: string,
+    @Query('did') did?: string,
     @Query('description') description?: string,
     @Query('startTimeMs') startTimeMs: number = 0,
     @Query('useCounting') useCounting?: boolean,
@@ -59,7 +60,7 @@ export class ModelController {
     this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
 
     // hard code for searching name 
-    if (!name) {
+    if (useCounting) {
       const models = await this.modelService.findAllModelIds();
       this.logger.log(`All model count: ${models?.length}`);
       const useCountMap =
@@ -90,6 +91,7 @@ export class ModelController {
       pageSize,
       pageNumber,
       name,
+      did
       description,
       startTimeMs,
     );
