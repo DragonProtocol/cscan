@@ -9,7 +9,7 @@ export default class CeramicSubscriberService {
   private readonly logger = new Logger(CeramicSubscriberService.name);
 
   constructor(
-    @InjectRepository(Stream)
+    @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
   ) { }
   async SubCeramic(
