@@ -22,7 +22,10 @@ export class ModelController {
   constructor(
     private readonly modelService: ModelService,
     private readonly streamService: StreamService,
-  ) { }
+  ) { 
+    //test
+    //this.initModels();
+  }
 
   @Get('/')
   @ApiQuery({
@@ -54,18 +57,19 @@ export class ModelController {
     @Query('useCounting') useCounting?: boolean,
     @Query('pageSize') pageSize?: number,
     @Query('pageNumber') pageNumber?: number,
+    @Query('network') network: Network = Network.TESTNET,
   ): Promise<BasicMessageDto> {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
     this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
 
-    // hard code for searching name and did
+    // hard code for searching name 
     if (!name && !did) {
-      const models = await this.modelService.findAllModelIds();
+      const models = await this.modelService.findAllModelIds(network);
       this.logger.log(`All model count: ${models?.length}`);
       const useCountMap =
         await this.streamService.findModelUseCountOrderByUseCount(
-          Network.TESTNET,
+          network,
           pageSize,
           pageNumber,
           models,
@@ -73,7 +77,7 @@ export class ModelController {
       if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
 
       const metaModels = await this.modelService.findModelsByIds(
-        Array.from(useCountMap.keys()),
+        Array.from(useCountMap.keys()), network
       );
       if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
       return new BasicMessageDto(
@@ -94,12 +98,13 @@ export class ModelController {
       did,
       description,
       startTimeMs,
+      network,
     );
     if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
 
     const models = metaModels.map((m) => m.getStreamId);
     const useCountMap = await this.streamService.findModelUseCount(
-      Network.TESTNET,
+      network,
       models,
     );
 
@@ -113,9 +118,21 @@ export class ModelController {
     );
   }
 
+  getCeramicNode(network: Network) {
+    return network == Network.MAINNET ? process.env.CERAMIC_NODE_MAINET : process.env.CERAMIC_NODE;
+  }
+
+  getCeramicNodeAdminKey(network: Network) {
+    return network == Network.MAINNET ? process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY_MAINNET : process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY;
+  }
+
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/')
   async CreateAndDeployModel(@Body() dto: CreateModelDto) {
+    
+    let ceramic_node = this.getCeramicNode(dto.network);
+    let ceramic_node_admin_key = this.getCeramicNodeAdminKey(dto.network);
+
     const { CeramicClient } = await importDynamic(
       '@ceramicnetwork/http-client',
     );
@@ -133,12 +150,12 @@ export class ModelController {
 
     // 0 Login
     this.logger.log('Connecting to the our ceramic node...');
-    const ceramic = new CeramicClient(process.env.CERAMIC_NODE);
+    const ceramic = new CeramicClient(ceramic_node);
     try {
       // Hexadecimal-encoded private key for a DID having admin access to the target Ceramic node
       // Replace the example key here by your admin private key
       const privateKey = fromString(
-        process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY,
+        ceramic_node_admin_key,
         'base16',
       );
       const did = new DID({
@@ -209,5 +226,44 @@ export class ModelController {
       composite: composite,
       runtimeDefinition: runtimeDefinition,
     });
+  }
+
+  async initModels() {
+    //import { CeramicClient } from "@ceramicnetwork/http-client";
+    //import { DID } from "dids";
+    //import { Ed25519Provider } from "key-did-provider-ed25519";
+    //import { getResolver } from "key-did-resolver";
+    //import { fromString } from "uint8arrays/from-string";
+    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
+    const { Composite } = await importDynamic('@composedb/devtools');
+    const { DID } = await importDynamic('dids');
+    const { Ed25519Provider } = await importDynamic('key-did-provider-ed25519');
+    const { getResolver } = await importDynamic('key-did-resolver');
+    const { fromString } = await importDynamic('uint8arrays/from-string');
+
+    const key = "<your key>";
+    const privateKey = fromString(key, "base16");
+    
+    const ceramicIndexer = new CeramicClient(
+      //"http://13.215.254.225:7007"
+      "http://3.27.88.154:7007"
+    );
+    
+    (async () => {
+    
+      const did = new DID({
+        resolver: getResolver(),
+        provider: new Ed25519Provider(privateKey),
+      });
+      await did.authenticate();
+      console.log("-=-=-=", did.authenticated);
+      ceramicIndexer.did = did;
+    
+      const res = await ceramicIndexer.admin.startIndexingModels([
+        "kh4q0ozorrgaq2mezktnrmdwleo1d",
+      ]);
+    
+      console.log("initModels done...... ", res);
+    })();    
   }
 }

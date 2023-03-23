@@ -1,26 +1,34 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MetaModel } from '../entities/model/model.entity';
-import { MetaModelRepository } from '../entities/model/model.repository';
-import { In } from 'typeorm';
+import { MetaModel, MetaModelMainnet } from '../entities/model/model.entity';
+import { MetaModelMainnetRepository, MetaModelRepository } from '../entities/model/model.repository';
+import { In, Repository } from 'typeorm';
+import { Network } from 'src/entities/stream/stream.entity';
 
 @Injectable()
 export default class ModelService {
   private readonly logger = new Logger(ModelService.name);
 
   constructor(
-    @InjectRepository(MetaModel)
+    @InjectRepository(MetaModel, 'testnet')
     private readonly metaModelRepository: MetaModelRepository,
+
+    @InjectRepository(MetaModelMainnet, 'mainnet')
+    private readonly metaModelMainnetRepository: MetaModelMainnetRepository,
   ) { }
 
-  async findModelsByIds(streamIds: string[]): Promise<MetaModel[]> {
-    return this.metaModelRepository.find({
+  getMetaModelRepository(network: Network) {
+    return (network == Network.MAINNET) ? this.metaModelMainnetRepository: this.metaModelRepository;
+  }
+
+  async findModelsByIds(streamIds: string[], network: Network = Network.TESTNET): Promise<MetaModel[]|MetaModelMainnet[]> {
+    return this.getMetaModelRepository(network).find({
       where: { stream_id: In(streamIds) },
     });
   }
 
-  async findAllModelIds(): Promise<string[]> {
-    const result = await this.metaModelRepository
+  async findAllModelIds(network: Network): Promise<string[]> {
+    const result = await this.getMetaModelRepository(network)
       .createQueryBuilder()
       .select(['stream_id'])
       .getRawMany();
@@ -34,7 +42,8 @@ export default class ModelService {
     did?: string,
     description?: string,
     startTimeMs?: number,
-  ): Promise<MetaModel[]> {
+    network?: Network,
+  ): Promise<MetaModel[]|MetaModelMainnet[]> {
     let whereSql = '';
     if (name?.trim().length > 0) {
       if (whereSql.length > 0) {
@@ -62,7 +71,7 @@ export default class ModelService {
       whereSql += 'created_at > :startTime';
     }
 
-    return await this.metaModelRepository
+    return await this.getMetaModelRepository(network)
       .createQueryBuilder()
       .where(whereSql, {
         nameValue: '%' + name?.toLowerCase() + '%',

@@ -21,6 +21,7 @@ async function bootstrap() {
   await app.listen(3000);
 
   const ceramicSubscriberService = app.get(CeramicSubscriberService);
+  
   // Sub ceramic test network.
   await ceramicSubscriberService.SubCeramic(
     Network.TESTNET,
@@ -34,6 +35,7 @@ async function bootstrap() {
     '/ceramic/testnet-clay',
     'https://ceramic-clay.3boxlabs.com',
   );
+
   // Sub ceramic main network.
   await ceramicSubscriberService.SubCeramic(
     Network.MAINNET,

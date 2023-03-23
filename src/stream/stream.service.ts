@@ -8,7 +8,7 @@ export default class StreamService {
   private readonly logger = new Logger(StreamService.name);
 
   constructor(
-    @InjectRepository(Stream)
+    @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
   ) { }
 
