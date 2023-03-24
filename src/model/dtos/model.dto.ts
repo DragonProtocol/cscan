@@ -7,3 +7,10 @@ export class CreateModelDto {
   @ApiProperty()
   network?: Network;
 }
+
+export class ModelIdToGaphqlDto {
+  @ApiProperty()
+  models: string[];
+  @ApiProperty()
+  network?: Network;
+}

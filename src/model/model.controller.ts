@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Logger,
   Post,
   Query,
@@ -15,7 +16,7 @@ import ModelService from './model.service';
 import { BasicMessageDto } from '../common/dto';
 import StreamService from 'src/stream/stream.service';
 import { Network } from 'src/entities/stream/stream.entity';
-import { CreateModelDto } from './dtos/model.dto';
+import { CreateModelDto, ModelIdToGaphqlDto } from './dtos/model.dto';
 import { importDynamic } from 'src/common/utils';
 @ApiTags('/models')
 @Controller('/models')
@@ -27,6 +28,7 @@ export class ModelController {
   ) {
     //test
     //this.initModels();
+    //this.testModelId2graphql();
   }
 
   @Get('/')
@@ -237,12 +239,26 @@ export class ModelController {
     });
   }
 
+  @ApiOkResponse({ type: BasicMessageDto })
+  @Post('/graphql')
+  async ModelIdToGraphql(@Body() dto: ModelIdToGaphqlDto) {
+    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
+    const { Composite } = await importDynamic('@composedb/devtools');
+    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+    
+    try {
+      const ceramic = new CeramicClient(this.getCeramicNode(dto.network));
+      const composite = await Composite.fromModels({ ceramic: ceramic, models: dto.models })
+      const runtimeDefinition = composite.toRuntime();
+      const graphqlSchema = printGraphQLSchema(runtimeDefinition);
+      return new BasicMessageDto('ok', 0, { composite, runtimeDefinition, graphqlSchema });
+    } catch(e) {
+      throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
+    }
+  }
+
+
   async initModels() {
-    //import { CeramicClient } from "@ceramicnetwork/http-client";
-    //import { DID } from "dids";
-    //import { Ed25519Provider } from "key-did-provider-ed25519";
-    //import { getResolver } from "key-did-resolver";
-    //import { fromString } from "uint8arrays/from-string";
     const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
     const { Composite } = await importDynamic('@composedb/devtools');
     const { DID } = await importDynamic('dids');
@@ -275,4 +291,25 @@ export class ModelController {
       console.log("initModels done...... ", res);
     })();
   }
+
+  async testModelId2graphql() {
+    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
+    const { Composite } = await importDynamic('@composedb/devtools');
+    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+    const fs = require('fs');
+    const ceramic = new CeramicClient(
+      "http://13.215.254.225:7007"
+      //"http://3.27.88.154:7007"
+    );
+    const composite = await Composite.fromModels({
+      ceramic: ceramic,
+      models: ['kjzl6hvfrbw6cafpnfd031iecghmu2bfuhmm38jzf2pywnr3fsp8sh8ow93oihs'],
+      //models: ['kjzl6hvfrbw6c62v69f7velodufis69rht6cpqf534q2s757vcbdao4mi2z2i28'],
+      //models: ['kjzl6hvfrbw6c67oq5sjyvx3t5lz3cpeqf5bar2ctyzp9p9miffz6umqiu4la1h'],
+    })
+    const runtimeDefinition = composite.toRuntime();
+    fs.writeFileSync('a.txt', printGraphQLSchema(runtimeDefinition));
+    console.log("------------  done ");
+  }
+
 }
