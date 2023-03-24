@@ -6,9 +6,11 @@ import {
   Logger,
   Post,
   Query,
+  Req,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import ModelService from './model.service';
 import { BasicMessageDto } from '../common/dto';
 import StreamService from 'src/stream/stream.service';
@@ -22,7 +24,7 @@ export class ModelController {
   constructor(
     private readonly modelService: ModelService,
     private readonly streamService: StreamService,
-  ) { 
+  ) {
     //test
     //this.initModels();
   }
@@ -128,8 +130,8 @@ export class ModelController {
 
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/')
-  async CreateAndDeployModel(@Body() dto: CreateModelDto) {
-    
+  async CreateAndDeployModel(@Req() req: Request, @Body() dto: CreateModelDto) {
+
     let ceramic_node = this.getCeramicNode(dto.network);
     let ceramic_node_admin_key = this.getCeramicNodeAdminKey(dto.network);
 
@@ -152,19 +154,26 @@ export class ModelController {
     this.logger.log('Connecting to the our ceramic node...');
     const ceramic = new CeramicClient(ceramic_node);
     try {
-      // Hexadecimal-encoded private key for a DID having admin access to the target Ceramic node
-      // Replace the example key here by your admin private key
-      const privateKey = fromString(
-        ceramic_node_admin_key,
-        'base16',
-      );
-      const did = new DID({
-        resolver: getResolver(),
-        provider: new Ed25519Provider(privateKey),
-      });
-      await did.authenticate();
-      // An authenticated DID with admin access must be set on the Ceramic instance
-      ceramic.did = did;
+      const didSession = req.headers['did-session'];
+      if (didSession) {
+        const { DIDSession } = await importDynamic('did-session');
+        const session = await DIDSession.fromSession(didSession);
+        ceramic.did = session.did;
+      } else {
+        // Hexadecimal-encoded private key for a DID having admin access to the target Ceramic node
+        // Replace the example key here by your admin private key
+        const privateKey = fromString(
+          ceramic_node_admin_key,
+          'base16',
+        );
+        const did = new DID({
+          resolver: getResolver(),
+          provider: new Ed25519Provider(privateKey),
+        });
+        await did.authenticate();
+        // An authenticated DID with admin access must be set on the Ceramic instance
+        ceramic.did = did;
+      }
       this.logger.log('Connected to the our ceramic node!');
     } catch (e) {
       this.logger.error((e as Error).message);
@@ -243,14 +252,14 @@ export class ModelController {
 
     const key = "<your key>";
     const privateKey = fromString(key, "base16");
-    
+
     const ceramicIndexer = new CeramicClient(
       //"http://13.215.254.225:7007"
       "http://3.27.88.154:7007"
     );
-    
+
     (async () => {
-    
+
       const did = new DID({
         resolver: getResolver(),
         provider: new Ed25519Provider(privateKey),
@@ -258,12 +267,12 @@ export class ModelController {
       await did.authenticate();
       console.log("-=-=-=", did.authenticated);
       ceramicIndexer.did = did;
-    
+
       const res = await ceramicIndexer.admin.startIndexingModels([
         "kh4q0ozorrgaq2mezktnrmdwleo1d",
       ]);
-    
+
       console.log("initModels done...... ", res);
-    })();    
+    })();
   }
 }
