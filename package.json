@@ -26,6 +26,7 @@
     "@chainsafe/libp2p-gossipsub": "^6.1.0",
     "@chainsafe/libp2p-noise": "^11.0.0",
     "@composedb/devtools": "^0.4.3",
+    "@composedb/runtime": "^0.4.1",
     "@libp2p/bootstrap": "^6.0.0",
     "@libp2p/floodsub": "^6.0.0",
     "@libp2p/mplex": "^7.1.1",
