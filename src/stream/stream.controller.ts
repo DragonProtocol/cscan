@@ -126,7 +126,7 @@ export class StreamController {
     // build grapgql default query
     const modelName = Object.keys(definition.models)[0];
     const modelProperties = Object.entries(Object.values(definition.objects)[0]);
-    const defaultQuery = createGraphqlDefaultQuery(modelName.toLowerCase(), modelProperties);
+    const defaultQuery = createGraphqlDefaultQuery(modelName, modelProperties);
 
     const handler = createHandler({
       ceramic,

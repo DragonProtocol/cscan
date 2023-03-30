@@ -6,7 +6,7 @@ export const importDynamic = new Function(
 export function createGraphqlDefaultQuery(modelName: string, propertes: any[]){
   return `
   {
-    ${modelName}Index(first: 2) {
+    ${modelName.charAt(0).toLowerCase() + modelName.slice(1)}Index(first: 5) {
       edges {
         node {
           id,${propertes.map(p=>{
