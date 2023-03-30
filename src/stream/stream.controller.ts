@@ -19,7 +19,7 @@ import {
   ConvertToStreamsReponseDto,
   StreamDto,
 } from './dtos/stream.dto';
-import { importDynamic } from 'src/common/utils';
+import { createGraphqlDefaultQuery, importDynamic } from 'src/common/utils';
 @ApiTags('/')
 @Controller('/')
 export class StreamController {
@@ -105,30 +105,39 @@ export class StreamController {
   }
 
   @All('/:network/:modelStreamId/graphql')
-  async postGraphql( @Param('network') network: Network, @Param('modelStreamId') modelStreamId: string,
-     @Req() req,
-     @Res() res,) {
+  async postGraphql(@Param('network') network: Network, @Param('modelStreamId') modelStreamId: string,
+    @Req() req,
+    @Res() res,) {
     const { createHandler } = await importDynamic('@composedb/server');
-    const { createContext, createGraphQLSchema }  = await importDynamic('@composedb/runtime');
+    const { createContext, createGraphQLSchema } = await importDynamic('@composedb/runtime');
     const { Composite } = await importDynamic('@composedb/devtools');
     const { CeramicClient } = await importDynamic(
       '@ceramicnetwork/http-client',
     );
 
     let ceramic;
-    if (network == Network.MAINNET){
+    if (network == Network.MAINNET) {
       ceramic = new CeramicClient(process.env.CERAMIC_NODE_MAINET);
-    }else {
+    } else {
       ceramic = new CeramicClient(process.env.CERAMIC_NODE);
     }
     const composite = await Composite.fromModels({ ceramic: ceramic, models: [modelStreamId] })
+    const definition = composite.toRuntime();
+    // build grapgql default query
+    const modelName = Object.keys(definition.models)[0];
+    const modelProperties = Object.entries(Object.values(definition.objects)[0]);
+    const defaultQuery = createGraphqlDefaultQuery(modelName.toLowerCase(), modelProperties);
 
     const handler = createHandler({
       ceramic,
-      options: { context: createContext({ ceramic }), graphiql: true, graphqlEndpoint: `/${network}/${modelStreamId}/graphql`},
-      schema: createGraphQLSchema({ definition: composite.toRuntime(), readonly: true }),
+      options: {
+        context: createContext({ ceramic }), graphiql: {
+          defaultQuery: defaultQuery
+        }, graphqlEndpoint: `/${network}/${modelStreamId}/graphql`
+      },
+      schema: createGraphQLSchema({ definition: definition, readonly: false }),
     })
-    
+
     return handler(req, res, { req, res });
   }
 }
