@@ -121,7 +121,9 @@ export class StreamController {
     } else {
       ceramic = new CeramicClient(process.env.CERAMIC_NODE);
     }
-    const composite = await Composite.fromModels({ ceramic: ceramic, models: [modelStreamId] })
+    // get definition
+    const relationStreamIds = await this.streamService.getRelationStreamIds(ceramic, modelStreamId);
+    const composite = await Composite.fromModels({ ceramic: ceramic, models: [modelStreamId, ...relationStreamIds] })
     const definition = composite.toRuntime();
     // build grapgql default query
     const modelName = Object.keys(definition.models)[0];

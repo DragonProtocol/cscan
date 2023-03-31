@@ -51,6 +51,14 @@ export default class StreamService {
       .getMany();
   }
 
+  async getRelationStreamIds(ceramic: any, modelStreamId: string): Promise<string[]>{
+    if (!ceramic || modelStreamId?.length == 0) return [];
+
+    const stream = await ceramic.loadStream(modelStreamId);
+    const relationModelStreamIds = Object.values(stream?.content?.relations).map((o: any)=>o.model)
+    return relationModelStreamIds;
+  }
+
   async findModelUseCount(
     network: Network,
     models: string[],

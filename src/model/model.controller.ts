@@ -248,7 +248,14 @@ export class ModelController {
     
     try {
       const ceramic = new CeramicClient(this.getCeramicNode(dto.network));
-      const composite = await Composite.fromModels({ ceramic: ceramic, models: dto.models })
+      // build all model stream ids for the model
+      const allModelStreamIds = [];
+      for await (const streamId of dto.models) {
+        const relationModelStreamIds = await this.streamService.getRelationStreamIds(ceramic, streamId);
+        allModelStreamIds.push(...relationModelStreamIds);
+      }
+      // buid composite 
+      const composite = await Composite.fromModels({ ceramic: ceramic, models: [...dto.models, ...allModelStreamIds] });
       const runtimeDefinition = composite.toRuntime();
       const graphqlSchema = printGraphQLSchema(runtimeDefinition);
       return new BasicMessageDto('ok', 0, { composite, runtimeDefinition, graphqlSchema });
