@@ -83,6 +83,17 @@ export class StreamController {
     return new BasicMessageDto('ok', 0, ConvertToStream(stream));
   }
 
+  @Get('/:network/streams/:streamId/content')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getStreamContent(
+    @Param('streamId') streamId: string,
+    @Param('network') network: string,
+  ): Promise<any> {
+    const stream = await this.streamService.findByStreamId(Network[network.toUpperCase()], streamId);
+    if (!stream) throw new NotFoundException();
+    return stream?.getContent;
+  }
+
   @Get('/:network/streams/:streamId/info')
   @ApiOkResponse({ type: BasicMessageDto })
   async getStreamInfo(
