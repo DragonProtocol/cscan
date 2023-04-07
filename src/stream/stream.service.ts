@@ -83,9 +83,9 @@ export default class StreamService {
 
   async findModelUseCountOrderByUseCount(
     network: Network,
-    pageSize: number,
-    pageNumber: number,
     models: string[],
+    pageSize?: number,
+    pageNumber?: number,
   ): Promise<Map<string, number>> {
     const useCountMap = new Map<string, number>();
 
@@ -102,6 +102,30 @@ export default class StreamService {
       .limit(pageSize)
       .offset(pageSize * (pageNumber - 1))
       .orderBy('count', 'DESC')
+      .getRawMany();
+
+    useCountResult?.forEach((r) => {
+      useCountMap.set(r['model'], Number(r['count']));
+    });
+    return useCountMap;
+  }
+
+  async findAllModelUseCount(
+    network: Network,
+    models: string[],
+  ): Promise<Map<string, number>> {
+    const useCountMap = new Map<string, number>();
+
+    const useCountResult = await this.streamRepository
+      .createQueryBuilder('streams')
+      .select(['streams.model, count(streams.stream_id) as count'])
+      .where('network=:network', {
+        network: network,
+      })
+      .andWhere('model IN (:...models)', {
+        models: models,
+      })
+      .groupBy('streams.model')
       .getRawMany();
 
     useCountResult?.forEach((r) => {

@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DatabaseConfiguration } from '../database.configuration';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerBehindProxyGuard } from './middlewares/throttler-behind-proxy.guard';
 import { StreamModule } from './stream/stream.module';
 import { ModelModule } from './model/model.module';
-import { MetaModel, MetaModelMainnet } from './entities/model/model.entity';
 import 'dotenv/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const env: string | undefined = process.env.NODE_ENV;
 
@@ -23,7 +23,7 @@ const env: string | undefined = process.env.NODE_ENV;
       username: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE,
-      logging: true,
+      logging: false,
       entities: ['dist/**/*.entity{.ts,.js}'],
       type: 'postgres',
       extra: {
@@ -40,7 +40,7 @@ const env: string | undefined = process.env.NODE_ENV;
       username: process.env.DATABASE_USER_MAINNET,
       password: process.env.DATABASE_PASSWORD_MAINNET,
       database: process.env.DATABASE_MAINNET,
-      logging: true,
+      logging: false,
       entities: ['dist/**/*.entity{.ts,.js}'],
       type: 'postgres',
       ssl: true,
@@ -57,6 +57,12 @@ const env: string | undefined = process.env.NODE_ENV;
     }),
     StreamModule,
     ModelModule,
+    RedisModule.forRoot({
+      config: {
+        url: process.env.REDIS_URL,
+      },
+    }),
+    ScheduleModule.forRoot()
   ],
   controllers: [],
   providers: [

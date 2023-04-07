@@ -18,6 +18,8 @@ import StreamService from 'src/stream/stream.service';
 import { Network } from 'src/entities/stream/stream.entity';
 import { CreateModelDto, ModelIdToGaphqlDto } from './dtos/model.dto';
 import { importDynamic } from 'src/common/utils';
+import { Cron } from '@nestjs/schedule';
+
 @ApiTags('/models')
 @Controller('/models')
 export class ModelController {
@@ -65,19 +67,11 @@ export class ModelController {
   ): Promise<BasicMessageDto> {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
-    this.logger.log(`Seaching streams: useCounting: ${useCounting}`);
+    this.logger.log(`Seaching models: useCounting: ${useCounting}`);
 
     // hard code for searching name 
     if (!name && !did) {
-      const models = await this.modelService.findAllModelIds(network);
-      this.logger.log(`All model count: ${models?.length}`);
-      const useCountMap =
-        await this.streamService.findModelUseCountOrderByUseCount(
-          network,
-          pageSize,
-          pageNumber,
-          models,
-        );
+      const useCountMap = await this.modelService.getModelsByDecsPagination(network, pageSize, pageNumber);
       if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
 
       const metaModels = await this.modelService.findModelsByIds(
@@ -121,6 +115,23 @@ export class ModelController {
       })),
     );
   }
+
+  @Cron('0/3 * * * *')
+  @Post('/usecount/build')
+  async buildUseCount(@Query('network') network: Network = Network.TESTNET): Promise<BasicMessageDto> {
+    const models = await this.modelService.findAllModelIds(network);
+    this.logger.log(`All ${network} model count: ${models?.length}`);
+    const useCountMap =
+      await this.streamService.findAllModelUseCount(
+        network,
+        models,
+      );
+    if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
+    
+    await this.modelService.updateModelUseCount(network, useCountMap);
+    return new BasicMessageDto('ok', 0, {'useCountMap.size': useCountMap.size});
+  }
+
 
   getCeramicNode(network: Network) {
     return network == Network.MAINNET ? process.env.CERAMIC_NODE_MAINET : process.env.CERAMIC_NODE;
@@ -245,7 +256,7 @@ export class ModelController {
     const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
     const { Composite } = await importDynamic('@composedb/devtools');
     const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
-    
+
     try {
       const ceramic = new CeramicClient(this.getCeramicNode(dto.network));
       // build all model stream ids for the model
@@ -259,7 +270,7 @@ export class ModelController {
       const runtimeDefinition = composite.toRuntime();
       const graphqlSchema = printGraphQLSchema(runtimeDefinition);
       return new BasicMessageDto('ok', 0, { composite, runtimeDefinition, graphqlSchema });
-    } catch(e) {
+    } catch (e) {
       throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
     }
   }
