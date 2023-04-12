@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MetaModel, MetaModelMainnet } from '../entities/model/model.entity';
-import { MetaModelMainnetRepository, MetaModelRepository } from '../entities/model/model.repository';
+import { CeramicModelTestNet, MetaModel, MetaModelMainnet } from '../entities/model/model.entity';
+import { CeramicModelTestNetRepository, MetaModelMainnetRepository, MetaModelRepository } from '../entities/model/model.repository';
 import { In, Repository } from 'typeorm';
 import { Network } from 'src/entities/stream/stream.entity';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import { S3_MAINNET_MODELS_USE_COUNT_ZSET, S3_TESTNET_MODELS_USE_COUNT_ZSET } from 'src/common/constants';
+import { Cron } from '@nestjs/schedule';
+import { getCeramicNode, getCeramicNodeAdminKey, importDynamic } from 'src/common/utils';
 
 @Injectable()
 export default class ModelService {
@@ -19,8 +21,56 @@ export default class ModelService {
     @InjectRepository(MetaModelMainnet, 'mainnet')
     private readonly metaModelMainnetRepository: MetaModelMainnetRepository,
 
+    @InjectRepository(CeramicModelTestNet, 'testnet')
+    private readonly ceramicModelTestNetRepository: CeramicModelTestNetRepository,
+
     @InjectRedis() private readonly redis: Redis,
   ) { }
+
+  // Currently only support testnet.
+  @Cron('0/1 * * * *')
+  async addModelIndexForTestNet() {
+    try {
+      // find the lastest indexed model from ceramic_models
+      const ceramicModel = await this.ceramicModelTestNetRepository.createQueryBuilder().orderBy('created_at', 'DESC').limit(1).getOne();
+      if (!ceramicModel) return;
+
+      // find new models from kh4...
+      const model = await this.metaModelRepository.findOne({ where: { stream_id: ceramicModel.getModel } });
+      if (!model) return;
+      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt: model.getCreatedAt }).getMany();
+      if (newModels.length == 0) return
+      this.logger.log(`To index models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
+
+      // index new models
+      const { CeramicClient } = await importDynamic(
+        '@ceramicnetwork/http-client',
+      );
+      const { DID } = await importDynamic('dids');
+      const { Ed25519Provider } = await importDynamic('key-did-provider-ed25519');
+      const { getResolver } = await importDynamic('key-did-resolver');
+      const { fromString } = await importDynamic('uint8arrays/from-string');
+      const ceramicNode = getCeramicNode(Network.TESTNET);
+      const ceramicNodeAdminKey = getCeramicNodeAdminKey(Network.TESTNET);
+      const ceramic = new CeramicClient(ceramicNode);
+      const privateKey = fromString(
+        ceramicNodeAdminKey,
+        'base16',
+      );
+      const did = new DID({
+        resolver: getResolver(),
+        provider: new Ed25519Provider(privateKey),
+      });
+      await did.authenticate();
+      ceramic.did = did;
+
+      const res = await ceramic.admin.startIndexingModels(newModels.map(m => m.getStreamId));
+      this.logger.log(`Indexed models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
+    } catch (error) {
+      this.logger.error(`Add models index err: ${error}`);
+    }
+
+  }
 
   getMetaModelRepository(network: Network) {
     return (network == Network.MAINNET) ? this.metaModelMainnetRepository : this.metaModelRepository;
@@ -94,11 +144,11 @@ export default class ModelService {
     pageNumber: number): Promise<Map<string, number>> {
     const useCountMap = new Map<string, number>();
     const key = network == Network.MAINNET ? S3_MAINNET_MODELS_USE_COUNT_ZSET : S3_TESTNET_MODELS_USE_COUNT_ZSET;
-    const memebers = await this.redis.zrange(key, -(pageSize*pageNumber+1), -((pageNumber-1)*pageSize+1),'WITHSCORES');
+    const memebers = await this.redis.zrange(key, -(pageSize * pageNumber + 1), -((pageNumber - 1) * pageSize + 1), 'WITHSCORES');
     for (let index = 0; index < memebers.length; index++) {
-        if (index%2 == 0){
-          useCountMap.set(memebers[index], +memebers[index+1]);
-        }      
+      if (index % 2 == 0) {
+        useCountMap.set(memebers[index], +memebers[index + 1]);
+      }
     }
     return useCountMap;
   }

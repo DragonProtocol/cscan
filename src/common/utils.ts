@@ -1,7 +1,17 @@
+import { Network } from "src/entities/stream/stream.entity";
+
 export const importDynamic = new Function(
   'modulePath',
   'return import(modulePath)',
 );
+
+export function getCeramicNode(network: Network) {
+  return network == Network.MAINNET ? process.env.CERAMIC_NODE_MAINET : process.env.CERAMIC_NODE;
+}
+
+export function getCeramicNodeAdminKey(network: Network) {
+  return network == Network.MAINNET ? process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY_MAINNET : process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY;
+}
 
 export function createGraphqlDefaultQuery(modelName: string, propertes: any[]){
   return `

@@ -17,7 +17,7 @@ import { BasicMessageDto } from '../common/dto';
 import StreamService from 'src/stream/stream.service';
 import { Network } from 'src/entities/stream/stream.entity';
 import { CreateModelDto, ModelIdToGaphqlDto } from './dtos/model.dto';
-import { importDynamic } from 'src/common/utils';
+import { getCeramicNode, getCeramicNodeAdminKey, importDynamic } from 'src/common/utils';
 import { Cron } from '@nestjs/schedule';
 
 @ApiTags('/models')
@@ -132,21 +132,12 @@ export class ModelController {
     return new BasicMessageDto('ok', 0, {'useCountMap.size': useCountMap.size});
   }
 
-
-  getCeramicNode(network: Network) {
-    return network == Network.MAINNET ? process.env.CERAMIC_NODE_MAINET : process.env.CERAMIC_NODE;
-  }
-
-  getCeramicNodeAdminKey(network: Network) {
-    return network == Network.MAINNET ? process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY_MAINNET : process.env.CERAMIC_NODE_ADMIN_PRIVATE_KEY;
-  }
-
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/')
   async CreateAndDeployModel(@Req() req: Request, @Body() dto: CreateModelDto) {
 
-    let ceramic_node = this.getCeramicNode(dto.network);
-    let ceramic_node_admin_key = this.getCeramicNodeAdminKey(dto.network);
+    let ceramic_node = getCeramicNode(dto.network);
+    let ceramic_node_admin_key = getCeramicNodeAdminKey(dto.network);
 
     const { CeramicClient } = await importDynamic(
       '@ceramicnetwork/http-client',
@@ -258,7 +249,7 @@ export class ModelController {
     const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
 
     try {
-      const ceramic = new CeramicClient(this.getCeramicNode(dto.network));
+      const ceramic = new CeramicClient(getCeramicNode(dto.network));
       // build all model stream ids for the model
       const allModelStreamIds = [];
       for await (const streamId of dto.models) {
