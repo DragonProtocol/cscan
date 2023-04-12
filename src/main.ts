@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { importDynamic } from './common/utils';
 import { Network } from './entities/stream/stream.entity';
 import CeramicSubscriberService from './stream/ceramic.subscriber.service';
 
@@ -34,7 +33,7 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/20000/ws'],
     '/ceramic/testnet-clay',
-    'https://ceramic-clay.3boxlabs.com',
+    'https://gateway-clay.ceramic.network',
   );
 
   // Sub ceramic main network.
