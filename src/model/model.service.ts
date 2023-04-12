@@ -28,17 +28,49 @@ export default class ModelService {
   ) { }
 
   // Currently only support testnet.
-  @Cron('0/1 * * * *')
-  async addModelIndexForTestNet() {
+  async indexTopModelsForTestNet() {
     try {
-      // find the lastest indexed model from ceramic_models
-      const ceramicModel = await this.ceramicModelTestNetRepository.createQueryBuilder().orderBy('created_at', 'DESC').limit(1).getOne();
-      if (!ceramicModel) return;
+      const modelMap = await this.getModelsByDecsPagination(Network.TESTNET, 1000, 1);
 
-      // find new models from kh4...
-      const model = await this.metaModelRepository.findOne({ where: { stream_id: ceramicModel.getModel } });
-      if (!model) return;
-      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt: model.getCreatedAt }).getMany();
+      // index new models
+      const { CeramicClient } = await importDynamic(
+        '@ceramicnetwork/http-client',
+      );
+      const { DID } = await importDynamic('dids');
+      const { Ed25519Provider } = await importDynamic('key-did-provider-ed25519');
+      const { getResolver } = await importDynamic('key-did-resolver');
+      const { fromString } = await importDynamic('uint8arrays/from-string');
+      const ceramicNode = getCeramicNode(Network.TESTNET);
+      const ceramicNodeAdminKey = getCeramicNodeAdminKey(Network.TESTNET);
+      const ceramic = new CeramicClient(ceramicNode);
+      const privateKey = fromString(
+        ceramicNodeAdminKey,
+        'base16',
+      );
+      const did = new DID({
+        resolver: getResolver(),
+        provider: new Ed25519Provider(privateKey),
+      });
+      await did.authenticate();
+      ceramic.did = did;
+
+      for await (const m of modelMap) {
+        try {
+          const res = await ceramic.admin.startIndexingModels([m[0]]);
+          this.logger.log(`Indexed model: ${m[0]}.`);
+        } catch (error) {
+          this.logger.error(`Add model ${m[0]} index err: ${error}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Add models index err: ${error}`);
+    }
+  }
+
+  async indexNewModelsOnTestNet() {
+    try {
+      // find new models of a period from kh4...
+      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt:  new Date(new Date().setDate(new Date().getDate()-1))}).getMany();
       if (newModels.length == 0) return
       this.logger.log(`To index models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
 
@@ -64,8 +96,18 @@ export default class ModelService {
       await did.authenticate();
       ceramic.did = did;
 
-      const res = await ceramic.admin.startIndexingModels(newModels.map(m => m.getStreamId));
-      this.logger.log(`Indexed models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
+      for await (const m of newModels) {
+        try {
+          const ceramicModel = await this.ceramicModelTestNetRepository.find({where:{model: m.getStreamId}});
+          if (ceramicModel) continue;
+
+          const res = await ceramic.admin.startIndexingModels(m.getStreamId);
+          this.logger.log(`Indexed models, stream ids:${m.getStreamId}`);
+
+        } catch (error) {
+          this.logger.error(`Add model ${m.getStreamId} index err: ${error}`);
+        }
+      }
     } catch (error) {
       this.logger.error(`Add models index err: ${error}`);
     }

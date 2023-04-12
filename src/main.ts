@@ -46,7 +46,7 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/30000/ws'],
     '/ceramic/mainnet',
-    'https://ceramic.passport-iam.gitcoin.co/',
+    'https://gateway.ceramic.network/',
   );
 }
 bootstrap();
