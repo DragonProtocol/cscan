@@ -56,6 +56,8 @@ export default class ModelService {
 
       for await (const m of modelMap) {
         try {
+          const ceramicModel = await this.ceramicModelTestNetRepository.findOne({where:{model: m[0]}});
+          if (ceramicModel) continue;
           const res = await ceramic.admin.startIndexingModels([m[0]]);
           this.logger.log(`Indexed model: ${m[0]}.`);
         } catch (error) {
@@ -67,10 +69,11 @@ export default class ModelService {
     }
   }
 
+  @Cron('*/5 * * * *')
   async indexNewModelsOnTestNet() {
     try {
       // find new models of a period from kh4...
-      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt:  new Date(new Date().setDate(new Date().getDate()-1))}).getMany();
+      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt:  new Date(new Date().setDate(new Date().getDate()-7))}).getMany();
       if (newModels.length == 0) return
       this.logger.log(`To index models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
 
@@ -98,18 +101,18 @@ export default class ModelService {
 
       for await (const m of newModels) {
         try {
-          const ceramicModel = await this.ceramicModelTestNetRepository.find({where:{model: m.getStreamId}});
+          const ceramicModel = await this.ceramicModelTestNetRepository.findOne({where:{model: m.getStreamId}});
           if (ceramicModel) continue;
-
-          const res = await ceramic.admin.startIndexingModels(m.getStreamId);
-          this.logger.log(`Indexed models, stream ids:${m.getStreamId}`);
-
+          
+          this.logger.log(`Indexing models, stream id:${m.getStreamId}`);
+          const res = await ceramic.admin.startIndexingModels([m.getStreamId]);
+          this.logger.log(`Indexed models, stream id:${m.getStreamId}`);
         } catch (error) {
-          this.logger.error(`Add model ${m.getStreamId} index err: ${error}`);
+          this.logger.error(`Index model ${m.getStreamId}  err: ${error}`);
         }
       }
     } catch (error) {
-      this.logger.error(`Add models index err: ${error}`);
+      this.logger.error(`Index models index err: ${error}`);
     }
 
   }
