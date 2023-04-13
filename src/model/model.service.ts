@@ -28,9 +28,9 @@ export default class ModelService {
   ) { }
 
   // Currently only support testnet.
-  async indexTopModelsForTestNet() {
+  async indexTopModelsForTestNet(topNum: number) {
     try {
-      const modelMap = await this.getModelsByDecsPagination(Network.TESTNET, 1000, 1);
+      const modelMap = await this.getModelsByDecsPagination(Network.TESTNET, topNum, 1);
 
       // index new models
       const { CeramicClient } = await importDynamic(
@@ -54,10 +54,13 @@ export default class ModelService {
       await did.authenticate();
       ceramic.did = did;
 
+      const indexedModels = await this.ceramicModelTestNetRepository.find({where:{model: In(Array.from(modelMap.keys()))}});
+      const indexedModelIds = indexedModels.map(m=>m.getModel);
       for await (const m of modelMap) {
         try {
-          const ceramicModel = await this.ceramicModelTestNetRepository.findOne({where:{model: m[0]}});
-          if (ceramicModel) continue;
+          this.logger.log(`To index models, stream id:${m[0]}`);
+          if (indexedModelIds.includes(m[0])) continue;
+          this.logger.log(`Index models, stream id:${m[0]}`);
           const res = await ceramic.admin.startIndexingModels([m[0]]);
           this.logger.log(`Indexed model: ${m[0]}.`);
         } catch (error) {
@@ -69,11 +72,11 @@ export default class ModelService {
     }
   }
 
-  @Cron('*/5 * * * *')
+  // @Cron('*/3 * * * *')
   async indexNewModelsOnTestNet() {
     try {
       // find new models of a period from kh4...
-      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt:  new Date(new Date().setDate(new Date().getDate()-7))}).getMany();
+      const newModels = await this.metaModelRepository.createQueryBuilder().where('created_at>:createdAt', { createdAt:  new Date(new Date().setDate(new Date().getDate()-1))}).getMany();
       if (newModels.length == 0) return
       this.logger.log(`To index models lenth:${newModels.length}, stream ids:${newModels.map(m => m.getStreamId)}`);
 
@@ -99,10 +102,12 @@ export default class ModelService {
       await did.authenticate();
       ceramic.did = did;
 
+      const indexedModels = await this.ceramicModelTestNetRepository.find({where:{model: In(newModels.map(m=>m.getStreamId))}});
+      const indexedModelIds = indexedModels.map(m=>m.getModel);
       for await (const m of newModels) {
         try {
-          const ceramicModel = await this.ceramicModelTestNetRepository.findOne({where:{model: m.getStreamId}});
-          if (ceramicModel) continue;
+          this.logger.log(`To index models, stream id:${m.getStreamId}`);
+          if (indexedModelIds.includes(m.getStreamId)) continue;
           
           this.logger.log(`Indexing models, stream id:${m.getStreamId}`);
           const res = await ceramic.admin.startIndexingModels([m.getStreamId]);

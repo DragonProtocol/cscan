@@ -127,9 +127,15 @@ export class ModelController {
         models,
       );
     if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
-    
+
     await this.modelService.updateModelUseCount(network, useCountMap);
-    return new BasicMessageDto('ok', 0, {'useCountMap.size': useCountMap.size});
+    return new BasicMessageDto('ok', 0, { 'useCountMap.size': useCountMap.size });
+  }
+
+  @Post('/indexing')
+  async indexModels(): Promise<BasicMessageDto> {
+    await this.modelService.indexTopModelsForTestNet(20000);
+    return new BasicMessageDto('ok', 0);
   }
 
   @ApiOkResponse({ type: BasicMessageDto })
