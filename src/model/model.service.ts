@@ -72,7 +72,7 @@ export default class ModelService {
     }
   }
 
-  @Cron('*/3 * * * *')
+  // @Cron('*/3 * * * *')
   async indexNewModelsOnTestNet() {
     try {
       // find new models of a period from kh4...
