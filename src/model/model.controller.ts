@@ -116,7 +116,7 @@ export class ModelController {
     );
   }
 
-  @Cron('0/3 * * * *')
+  @Cron('0/10 * * * *')
   @Post('/usecount/build')
   async buildUseCount(@Query('network') network: Network = Network.TESTNET): Promise<BasicMessageDto> {
     const models = await this.modelService.findAllModelIds(network);
