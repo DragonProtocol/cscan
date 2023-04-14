@@ -157,7 +157,7 @@ export default class CeramicSubscriberService {
     try {
       let domian: string;
       if (genesisCid) {
-        this.logger.log(`To store stream(${streamId})  network:${network}`);
+        // this.logger.log(`To store stream(${streamId})  network:${network}`);
         const cacao = await this.getCacao(genesisCid);
         domian = cacao?.value?.p?.domain;
       }
@@ -221,7 +221,7 @@ export default class CeramicSubscriberService {
       id.toString().replace('CommitID(', '').replace(')', ''),
     );
     if (domain) {
-      this.logger.log(`The stream(${streamId}) has the domain:${domain}`);
+      // this.logger.log(`The stream(${streamId}) has the domain:${domain}`);
       stream.setDomain = domain;
     }
     stream.setContent = streamState.content;
