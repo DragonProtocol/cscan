@@ -33,7 +33,7 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/20000/ws'],
     '/ceramic/testnet-clay',
-    'https://gateway-clay.ceramic.network',
+    'https://gateway.ceramic.network/',
   );
 
   // Sub ceramic main network.

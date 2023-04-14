@@ -127,14 +127,14 @@ export class ModelController {
         models,
       );
     if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
-
     await this.modelService.updateModelUseCount(network, useCountMap);
     return new BasicMessageDto('ok', 0, { 'useCountMap.size': useCountMap.size });
   }
 
   @Post('/indexing')
-  async indexModels(): Promise<BasicMessageDto> {
-    await this.modelService.indexTopModelsForTestNet(20000);
+  async indexModels(@Query('num') num: number = 20000): Promise<BasicMessageDto> {
+    this.logger.log( `Staring index ${num} models on testnet.`);
+    await this.modelService.indexTopModelsForTestNet(num);
     return new BasicMessageDto('ok', 0);
   }
 
