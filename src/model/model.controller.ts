@@ -17,7 +17,11 @@ import { BasicMessageDto } from '../common/dto';
 import StreamService from 'src/stream/stream.service';
 import { Network } from 'src/entities/stream/stream.entity';
 import { CreateModelDto, ModelIdToGaphqlDto } from './dtos/model.dto';
-import { getCeramicNode, getCeramicNodeAdminKey, importDynamic } from 'src/common/utils';
+import {
+  getCeramicNode,
+  getCeramicNodeAdminKey,
+  importDynamic,
+} from 'src/common/utils';
 import { Cron } from '@nestjs/schedule';
 
 @ApiTags('/models')
@@ -69,22 +73,28 @@ export class ModelController {
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
     this.logger.log(`Seaching models: useCounting: ${useCounting}`);
 
-    // hard code for searching name 
+    // hard code for searching name
     if (!name && !did) {
-      const useCountMap = await this.modelService.getModelsByDecsPagination(network, pageSize, pageNumber);
+      const useCountMap = await this.modelService.getModelsByDecsPagination(
+        network,
+        pageSize,
+        pageNumber,
+      );
       if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
 
       const metaModels = await this.modelService.findModelsByIds(
-        Array.from(useCountMap.keys()), network
+        Array.from(useCountMap.keys()),
+        network,
       );
       if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
       return new BasicMessageDto(
         'ok',
         0,
-        metaModels.map((m) => ({
-          ...m,
-          useCount: useCountMap?.get(m.getStreamId) ?? 0,
-        }))
+        metaModels
+          .map((m) => ({
+            ...m,
+            useCount: useCountMap?.get(m.getStreamId) ?? 0,
+          }))
           .sort((a, b) => b.useCount - a.useCount),
       );
     }
@@ -118,22 +128,27 @@ export class ModelController {
 
   @Cron('0/10 * * * *')
   @Post('/usecount/build')
-  async buildUseCount(@Query('network') network: Network = Network.TESTNET): Promise<BasicMessageDto> {
+  async buildUseCount(
+    @Query('network') network: Network = Network.TESTNET,
+  ): Promise<BasicMessageDto> {
     const models = await this.modelService.findAllModelIds(network);
     this.logger.log(`All ${network} model count: ${models?.length}`);
-    const useCountMap =
-      await this.streamService.findAllModelUseCount(
-        network,
-        models,
-      );
+    const useCountMap = await this.streamService.findAllModelUseCount(
+      network,
+      models,
+    );
     if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
     await this.modelService.updateModelUseCount(network, useCountMap);
-    return new BasicMessageDto('ok', 0, { 'useCountMap.size': useCountMap.size });
+    return new BasicMessageDto('ok', 0, {
+      'useCountMap.size': useCountMap.size,
+    });
   }
 
   @Post('/indexing')
-  async indexModels(@Query('num') num: number = 20000): Promise<BasicMessageDto> {
-    this.logger.log( `Staring index ${num} models on testnet.`);
+  async indexModels(
+    @Query('num') num: number = 20000,
+  ): Promise<BasicMessageDto> {
+    this.logger.log(`Staring index ${num} models on testnet.`);
     await this.modelService.indexTopModelsForTestNet(num);
     return new BasicMessageDto('ok', 0);
   }
@@ -141,9 +156,8 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/')
   async CreateAndDeployModel(@Req() req: Request, @Body() dto: CreateModelDto) {
-
-    let ceramic_node = getCeramicNode(dto.network);
-    let ceramic_node_admin_key = getCeramicNodeAdminKey(dto.network);
+    const ceramic_node = getCeramicNode(dto.network);
+    const ceramic_node_admin_key = getCeramicNodeAdminKey(dto.network);
 
     const { CeramicClient } = await importDynamic(
       '@ceramicnetwork/http-client',
@@ -172,10 +186,7 @@ export class ModelController {
       } else {
         // Hexadecimal-encoded private key for a DID having admin access to the target Ceramic node
         // Replace the example key here by your admin private key
-        const privateKey = fromString(
-          ceramic_node_admin_key,
-          'base16',
-        );
+        const privateKey = fromString(ceramic_node_admin_key, 'base16');
         const did = new DID({
           resolver: getResolver(),
           provider: new Ed25519Provider(privateKey),
@@ -250,7 +261,9 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/graphql')
   async ModelIdToGraphql(@Body() dto: ModelIdToGaphqlDto) {
-    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
+    const { CeramicClient } = await importDynamic(
+      '@ceramicnetwork/http-client',
+    );
     const { Composite } = await importDynamic('@composedb/devtools');
     const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
 
@@ -259,72 +272,24 @@ export class ModelController {
       // build all model stream ids for the model
       const allModelStreamIds = [];
       for await (const streamId of dto.models) {
-        const relationModelStreamIds = await this.streamService.getRelationStreamIds(ceramic, streamId);
+        const relationModelStreamIds =
+          await this.streamService.getRelationStreamIds(ceramic, streamId);
         allModelStreamIds.push(...relationModelStreamIds);
       }
-      // buid composite 
-      const composite = await Composite.fromModels({ ceramic: ceramic, models: [...dto.models, ...allModelStreamIds] });
+      // buid composite
+      const composite = await Composite.fromModels({
+        ceramic: ceramic,
+        models: [...dto.models, ...allModelStreamIds],
+      });
       const runtimeDefinition = composite.toRuntime();
       const graphqlSchema = printGraphQLSchema(runtimeDefinition);
-      return new BasicMessageDto('ok', 0, { composite, runtimeDefinition, graphqlSchema });
+      return new BasicMessageDto('ok', 0, {
+        composite,
+        runtimeDefinition,
+        graphqlSchema,
+      });
     } catch (e) {
       throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
     }
   }
-
-
-  async initModels() {
-    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
-    const { Composite } = await importDynamic('@composedb/devtools');
-    const { DID } = await importDynamic('dids');
-    const { Ed25519Provider } = await importDynamic('key-did-provider-ed25519');
-    const { getResolver } = await importDynamic('key-did-resolver');
-    const { fromString } = await importDynamic('uint8arrays/from-string');
-
-    const key = "<your key>";
-    const privateKey = fromString(key, "base16");
-
-    const ceramicIndexer = new CeramicClient(
-      //"http://13.215.254.225:7007"
-      "http://3.27.88.154:7007"
-    );
-
-    (async () => {
-
-      const did = new DID({
-        resolver: getResolver(),
-        provider: new Ed25519Provider(privateKey),
-      });
-      await did.authenticate();
-      console.log("-=-=-=", did.authenticated);
-      ceramicIndexer.did = did;
-
-      const res = await ceramicIndexer.admin.startIndexingModels([
-        "kh4q0ozorrgaq2mezktnrmdwleo1d",
-      ]);
-
-      console.log("initModels done...... ", res);
-    })();
-  }
-
-  async testModelId2graphql() {
-    const { CeramicClient } = await importDynamic('@ceramicnetwork/http-client');
-    const { Composite } = await importDynamic('@composedb/devtools');
-    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
-    const fs = require('fs');
-    const ceramic = new CeramicClient(
-      "http://13.215.254.225:7007"
-      //"http://3.27.88.154:7007"
-    );
-    const composite = await Composite.fromModels({
-      ceramic: ceramic,
-      models: ['kjzl6hvfrbw6cafpnfd031iecghmu2bfuhmm38jzf2pywnr3fsp8sh8ow93oihs'],
-      //models: ['kjzl6hvfrbw6c62v69f7velodufis69rht6cpqf534q2s757vcbdao4mi2z2i28'],
-      //models: ['kjzl6hvfrbw6c67oq5sjyvx3t5lz3cpeqf5bar2ctyzp9p9miffz6umqiu4la1h'],
-    })
-    const runtimeDefinition = composite.toRuntime();
-    fs.writeFileSync('a.txt', printGraphQLSchema(runtimeDefinition));
-    console.log("------------  done ");
-  }
-
 }

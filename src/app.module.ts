@@ -29,8 +29,8 @@ const env: string | undefined = process.env.NODE_ENV;
       extra: {
         ssl: {
           rejectUnauthorized: false,
-        }
-      }
+        },
+      },
     }),
 
     TypeOrmModule.forRoot({
@@ -47,8 +47,8 @@ const env: string | undefined = process.env.NODE_ENV;
       extra: {
         ssl: {
           rejectUnauthorized: false,
-        }
-      }
+        },
+      },
     }),
 
     ThrottlerModule.forRoot({
@@ -62,7 +62,7 @@ const env: string | undefined = process.env.NODE_ENV;
         url: process.env.REDIS_URL,
       },
     }),
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [

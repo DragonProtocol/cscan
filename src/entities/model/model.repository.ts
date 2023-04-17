@@ -1,5 +1,9 @@
 import { EntityRepository, Repository } from 'typeorm';
-import { CeramicModelTestNet, MetaModel, MetaModelMainnet } from './model.entity';
+import {
+  CeramicModelTestNet,
+  MetaModel,
+  MetaModelMainnet,
+} from './model.entity';
 
 @EntityRepository(MetaModel)
 export class MetaModelRepository extends Repository<MetaModel> {}

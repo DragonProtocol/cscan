@@ -11,7 +11,7 @@ export default class CeramicSubscriberService {
   constructor(
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
-  ) { }
+  ) {}
   async SubCeramic(
     network: Network,
     bootstrapMultiaddrs: string[],
@@ -58,22 +58,24 @@ export default class CeramicSubscriberService {
 
       const genesisDag = await ipfs.dag.get(cid, { timeout: 6000 });
 
-      if (!genesisDag?.value) return
+      if (!genesisDag?.value) return;
 
-      const { base64urlToJSON } = await _importDynamic('@ceramicnetwork/common');
-      const decodedProtectedHeader = base64urlToJSON(genesisDag.value.signatures[0].protected);
-      const capIPFSUri = decodedProtectedHeader.cap
+      const { base64urlToJSON } = await _importDynamic(
+        '@ceramicnetwork/common',
+      );
+      const decodedProtectedHeader = base64urlToJSON(
+        genesisDag.value.signatures[0].protected,
+      );
+      const capIPFSUri = decodedProtectedHeader.cap;
       if (!capIPFSUri) return;
 
       const { CID } = await _importDynamic('multiformats/cid');
-      const cacaoCid = CID.parse(capIPFSUri.replace('ipfs://', ''))
+      const cacaoCid = CID.parse(capIPFSUri.replace('ipfs://', ''));
       if (!cacaoCid) return;
 
       cacaoDag = await ipfs.dag.get(cacaoCid);
     } catch (error) {
-      this.logger.warn(
-        `get Cacao err, cid:${cid} error:${error}`,
-      );
+      this.logger.warn(`get Cacao err, cid:${cid} error:${error}`);
     }
 
     return cacaoDag;
@@ -121,7 +123,7 @@ export default class CeramicSubscriberService {
       streamId,
       stream.allCommitIds,
       stream.state,
-      stream.id.cid
+      stream.id.cid,
     );
     // save schema stream
     if (stream?.metadata?.schema) {
@@ -167,7 +169,7 @@ export default class CeramicSubscriberService {
         streamId,
         commitIds,
         streamState,
-        domian
+        domian,
       );
       if (!stream) return;
 

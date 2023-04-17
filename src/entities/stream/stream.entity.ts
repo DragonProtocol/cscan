@@ -66,7 +66,7 @@ export class Stream extends BaseEntity {
 
   @Column({ nullable: true })
   private model: string;
-  
+
   @Index()
   @Column({ nullable: true })
   private domain: string;

@@ -10,7 +10,7 @@ export default class StreamService {
   constructor(
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
-  ) { }
+  ) {}
 
   async findByStreamId(network: Network, streamId: string): Promise<Stream> {
     return await this.streamRepository.findOne({
@@ -51,11 +51,16 @@ export default class StreamService {
       .getMany();
   }
 
-  async getRelationStreamIds(ceramic: any, modelStreamId: string): Promise<string[]>{
+  async getRelationStreamIds(
+    ceramic: any,
+    modelStreamId: string,
+  ): Promise<string[]> {
     if (!ceramic || modelStreamId?.length == 0) return [];
 
     const stream = await ceramic.loadStream(modelStreamId);
-    const relationModelStreamIds = Object.values(stream?.content?.relations).map((o: any)=>o.model)
+    const relationModelStreamIds = Object.values(
+      stream?.content?.relations,
+    ).map((o: any) => o.model);
     return relationModelStreamIds;
   }
 

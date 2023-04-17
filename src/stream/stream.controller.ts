@@ -24,7 +24,7 @@ import { createGraphqlDefaultQuery, importDynamic } from 'src/common/utils';
 @Controller('/')
 export class StreamController {
   private readonly logger = new Logger(StreamController.name);
-  constructor(private readonly streamService: StreamService) { }
+  constructor(private readonly streamService: StreamService) {}
 
   @Get('/streams')
   @ApiQuery({
@@ -89,7 +89,10 @@ export class StreamController {
     @Param('streamId') streamId: string,
     @Param('network') network: string,
   ): Promise<any> {
-    const stream = await this.streamService.findByStreamId(Network[network.toUpperCase()], streamId);
+    const stream = await this.streamService.findByStreamId(
+      Network[network.toUpperCase()],
+      streamId,
+    );
     if (!stream) throw new NotFoundException();
     return stream?.getContent;
   }
@@ -116,11 +119,16 @@ export class StreamController {
   }
 
   @All('/:network/:modelStreamId/graphql')
-  async postGraphql(@Param('network') network: Network, @Param('modelStreamId') modelStreamId: string,
+  async postGraphql(
+    @Param('network') network: Network,
+    @Param('modelStreamId') modelStreamId: string,
     @Req() req,
-    @Res() res,) {
+    @Res() res,
+  ) {
     const { createHandler } = await importDynamic('@composedb/server');
-    const { createContext, createGraphQLSchema } = await importDynamic('@composedb/runtime');
+    const { createContext, createGraphQLSchema } = await importDynamic(
+      '@composedb/runtime',
+    );
     const { Composite } = await importDynamic('@composedb/devtools');
     const { CeramicClient } = await importDynamic(
       '@ceramicnetwork/http-client',
@@ -133,23 +141,33 @@ export class StreamController {
       ceramic = new CeramicClient(process.env.CERAMIC_NODE);
     }
     // get definition
-    const relationStreamIds = await this.streamService.getRelationStreamIds(ceramic, modelStreamId);
-    const composite = await Composite.fromModels({ ceramic: ceramic, models: [modelStreamId, ...relationStreamIds] })
+    const relationStreamIds = await this.streamService.getRelationStreamIds(
+      ceramic,
+      modelStreamId,
+    );
+    const composite = await Composite.fromModels({
+      ceramic: ceramic,
+      models: [modelStreamId, ...relationStreamIds],
+    });
     const definition = composite.toRuntime();
     // build grapgql default query
     const modelName = Object.keys(definition.models)[0];
-    const modelProperties = Object.entries(Object.values(definition.objects)[0]);
+    const modelProperties = Object.entries(
+      Object.values(definition.objects)[0],
+    );
     const defaultQuery = createGraphqlDefaultQuery(modelName, modelProperties);
 
     const handler = createHandler({
       ceramic,
       options: {
-        context: createContext({ ceramic }), graphiql: {
-          defaultQuery: defaultQuery
-        }, graphqlEndpoint: `/${network}/${modelStreamId}/graphql`
+        context: createContext({ ceramic }),
+        graphiql: {
+          defaultQuery: defaultQuery,
+        },
+        graphqlEndpoint: `/${network}/${modelStreamId}/graphql`,
       },
       schema: createGraphQLSchema({ definition: definition, readonly: false }),
-    })
+    });
 
     return handler(req, res, { req, res });
   }

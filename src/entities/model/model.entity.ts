@@ -159,7 +159,6 @@ export class MetaModel extends BaseEntity {
   }
 }
 
-
 @Entity({
   name: 'kh4q0ozorrgaq2mezktnrmdwleo1d',
 })
@@ -244,4 +243,3 @@ export class MetaModelMainnet extends BaseEntity {
     this.updated_at = updatedAt;
   }
 }
-
