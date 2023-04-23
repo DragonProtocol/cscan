@@ -43,6 +43,10 @@ export class StreamController {
     name: 'pageSize',
     required: false,
   })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+  })
   @ApiOkResponse({ type: BasicMessageDto })
   async getStreams(
     @Query('network') network: Network,
@@ -50,6 +54,7 @@ export class StreamController {
     @Query('did') did?: string,
     @Query('pageSize') pageSize?: number,
     @Query('pageNumber') pageNumber?: number,
+    @Query('type') type?: string,
   ): Promise<BasicMessageDto> {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
@@ -60,12 +65,22 @@ export class StreamController {
       did,
       pageSize,
       pageNumber,
+      type,
     );
     return new BasicMessageDto(
       'ok',
       0,
       ConvertToStreamsReponseDto(streams, 0, 0),
     );
+  }
+
+  @Get('/:network/streams/topics')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getStreamTopics(
+    @Param('network') network: Network,
+  ): Promise<BasicMessageDto> {
+    const topics = await this.streamService.getTopics(network);
+    return new BasicMessageDto('ok', 0, topics);
   }
 
   @Get('/:network/streams/:streamId')
@@ -171,4 +186,5 @@ export class StreamController {
 
     return handler(req, res, { req, res });
   }
+
 }

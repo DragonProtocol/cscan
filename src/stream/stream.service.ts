@@ -24,6 +24,7 @@ export default class StreamService {
     did: string,
     pageSize: number,
     pageNumber: number,
+    type: string,
   ): Promise<Stream[]> {
     let whereSql = 'network=:network';
     if (familyOrApp?.trim().length > 0) {
@@ -38,12 +39,20 @@ export default class StreamService {
       }
       whereSql += 'did=:did';
     }
+    if (type?.trim().length > 0) {
+      if (whereSql.length > 0) {
+        whereSql += ' AND ';
+      }
+      whereSql += 'type=:type';
+    }
+
     return await this.streamRepository
       .createQueryBuilder()
       .where(whereSql, {
         network: network,
         familyOrApp: familyOrApp,
         did: did,
+        type: type,
       })
       .limit(pageSize)
       .offset(pageSize * (pageNumber - 1))
@@ -137,5 +146,49 @@ export default class StreamService {
       useCountMap.set(r['model'], Number(r['count']));
     });
     return useCountMap;
+  }
+
+  async getTopics(
+    network: Network,
+  ): Promise<any> {
+    const sortmap = (map) => {
+      const arr = Array.from(map);
+      arr.sort((a, b) => b[1] - a[1]);
+      return arr;
+    };
+    const sortmapex = (map) => { 
+      return sortmap(map).map(e => ( { name: e[0], num: e[1] } ) )
+    };
+
+    const streams = await this.streamRepository
+      .createQueryBuilder('streams')
+      .select(['streams.id', 'streams.family', 'streams.domain', 'streams.network'])
+      .limit(20000)
+      .orderBy('id', 'DESC')
+      .getMany();
+
+    const familyMap = new Map<string, number>();      
+    const domainMap = new Map<string, number>();     
+
+    streams.forEach(e => {
+      if(e.getNetwork != network) {
+        return;
+      }
+
+      let key, map;
+
+      key = e.getFamily;
+      map = familyMap;
+      if(key) { map.set(key, (map.get(key)??0)+1); }
+
+      key = e.getDomain;
+      map = domainMap;
+      if(key) { map.set(key, (map.get(key)??0)+1); }
+    })
+    
+    return {
+      familys: sortmapex(familyMap),
+      domains: sortmapex(domainMap),
+    };
   }
 }
