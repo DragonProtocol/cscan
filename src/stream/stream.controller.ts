@@ -50,22 +50,29 @@ export class StreamController {
   @ApiOkResponse({ type: BasicMessageDto })
   async getStreams(
     @Query('network') network: Network,
-    @Query('familyOrApp') familyOrApp?: string,
+    @Query('familyOrApp') familyOrApps?: string[],
     @Query('did') did?: string,
     @Query('pageSize') pageSize?: number,
     @Query('pageNumber') pageNumber?: number,
-    @Query('type') type?: string,
+    @Query('type') types?: string[],
   ): Promise<BasicMessageDto> {
     if (!pageSize || pageSize == 0) pageSize = 50;
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
+    
+    if (familyOrApps && !Array.isArray(familyOrApps)) {
+      familyOrApps = [familyOrApps]
+    }
+    if (types && !Array.isArray(types)) {
+      types = [types];
+    }
 
     const streams = await this.streamService.findStreams(
       network,
-      familyOrApp,
+      familyOrApps,
       did,
       pageSize,
       pageNumber,
-      type,
+      types,
     );
     return new BasicMessageDto(
       'ok',
