@@ -13,3 +13,19 @@ export class BasicMessageDto {
   @ApiProperty()
   private data: any;
 }
+
+export class StatsDto {
+  constructor(){
+    this.streamsLastWeek = []; 
+  }
+  @ApiProperty()
+  totalModels: number;
+  @ApiProperty()
+  totalStreams: number;
+  @ApiProperty()
+  todayModels: number;
+  @ApiProperty()
+  streamsPerSecond: number;
+  @ApiProperty()
+  streamsLastWeek: number[];
+}
