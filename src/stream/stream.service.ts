@@ -20,18 +20,18 @@ export default class StreamService {
 
   async findStreams(
     network: Network,
-    familyOrApp: string,
+    familyOrApps: string[],
     did: string,
     pageSize: number,
     pageNumber: number,
-    type: string,
+    types: string[],
   ): Promise<Stream[]> {
     let whereSql = 'network=:network';
-    if (familyOrApp?.trim().length > 0) {
+    if (familyOrApps && familyOrApps.length > 0) {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'family=:familyOrApp OR domain=:familyOrApp';
+      whereSql += 'family IN (:...familyOrApps) OR domain IN (:...familyOrApps)';
     }
     if (did?.trim().length > 0) {
       if (whereSql.length > 0) {
@@ -39,20 +39,20 @@ export default class StreamService {
       }
       whereSql += 'did=:did';
     }
-    if (type?.trim().length > 0) {
+    if (types && types.length > 0) {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'type=:type';
+      whereSql += 'type In (:...types)';
     }
 
     return await this.streamRepository
       .createQueryBuilder()
       .where(whereSql, {
         network: network,
-        familyOrApp: familyOrApp,
+        familyOrApps: familyOrApps,
         did: did,
-        type: type,
+        types: types,
       })
       .limit(pageSize)
       .offset(pageSize * (pageNumber - 1))
