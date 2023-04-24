@@ -23,7 +23,7 @@ const sdk = new opentelemetry.NodeSDK({
     new ExpressInstrumentation(),
   ],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 's3-server-test',
+    [SemanticResourceAttributes.SERVICE_NAME]: process.env.APM_NAME,
   }),
 });
 
