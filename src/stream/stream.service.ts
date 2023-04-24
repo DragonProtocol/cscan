@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Network, Status, Stream } from '../entities/stream/stream.entity';
 import { StreamRepository } from '../entities/stream/stream.repository';
+import { StatsDto } from './dtos/common.dto';
 
 @Injectable()
 export default class StreamService {
@@ -163,7 +164,7 @@ export default class StreamService {
     const streams = await this.streamRepository
       .createQueryBuilder('streams')
       .select(['streams.id', 'streams.family', 'streams.domain', 'streams.network'])
-      .limit(20000)
+      .limit(100000)
       .orderBy('id', 'DESC')
       .getMany();
 
@@ -190,5 +191,40 @@ export default class StreamService {
       familys: sortmapex(familyMap),
       domains: sortmapex(domainMap),
     };
+  }
+
+  async getStats(
+    network: Network,
+  ): Promise<StatsDto> {
+    const dto = new StatsDto();
+    let streams = await this.streamRepository
+      .createQueryBuilder('streams')
+      .select(['streams.id','streams.network', 'streams.created_at'])
+      .limit(20000)
+      .orderBy('id', 'DESC')
+      .getMany();
+
+    streams = streams.filter(e => e.getNetwork == network);
+
+    const now = Math.floor((new Date()).getTime()/100);
+    const t1 = Math.floor(streams[0].getCreatedAt.getTime() / 1000);
+    const t2 = Math.floor(streams[streams.length-1].getCreatedAt.getTime() / 1000);
+
+    const weeks = [0,0,0,0,0,0,0];
+    for(let i=0; i<streams.length; ++i) {
+      const t = Math.floor(streams[i].getCreatedAt.getTime() / 1000);
+      if(t > now) { continue; }
+      console.log('aaa ----------------', (now-t)/(24*3600));
+      const idx = weeks.length - 1 - Math.floor((now - t) / (24*3600));
+      if(idx < 0) { break; }
+      weeks[idx] += 1;
+      console.log("---------", idx, weeks[idx]);
+    }
+
+    dto.totalStreams = streams[0].getId;
+    dto.streamsPerSecond = Math.floor((t1 - t2) / streams.length);
+    dto.streamsLastWeek = weeks;
+
+    return dto;
   }
 }

@@ -90,6 +90,15 @@ export class StreamController {
     return new BasicMessageDto('ok', 0, topics);
   }
 
+  @Get('/:network/stats')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getStats(
+    @Param('network') network: Network,
+  ): Promise<BasicMessageDto> {
+    const stats = await this.streamService.getStats(network);
+    return new BasicMessageDto('ok', 0, stats);
+  }
+
   @Get('/:network/streams/:streamId')
   @ApiOkResponse({ type: BasicMessageDto })
   async getStream(
