@@ -5,6 +5,7 @@ import {
   Get,
   InternalServerErrorException,
   Logger,
+  Param,
   Post,
   Query,
   Req,
@@ -132,6 +133,34 @@ export class ModelController {
         isIndexed: indexedModelStreamIdSet.has(m.getStreamId),
       })),
     );
+  }
+
+  @Get('/:modelStreamId/streams')
+  @ApiQuery({
+    name: 'pageNumber',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'network',
+    required: false,
+  })
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getModelStreams(
+    @Query('pageSize') pageSize: number,
+    @Query('pageNumber') pageNumber: number,
+    @Query('network') network: Network = Network.TESTNET,
+    @Param('modelStreamId') modelStreamId: string,
+  ): Promise<BasicMessageDto> {
+    if (!pageSize || pageSize == 0) pageSize = 50;
+    if (!pageNumber || pageNumber == 0) pageNumber = 1;
+    this.logger.log(`Seaching model(${modelStreamId})'s streams`);
+
+    const streams = await this.modelService.getStreams(network, modelStreamId, pageSize, pageNumber);
+    return new BasicMessageDto('ok', 0, streams);
   }
 
   @Cron('0/10 * * * *')

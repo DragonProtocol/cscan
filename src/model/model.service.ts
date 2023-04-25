@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import {
   CeramicModelMainNet,
   CeramicModelTestNet,
@@ -12,8 +12,8 @@ import {
   MetaModelMainnetRepository,
   MetaModelRepository,
 } from '../entities/model/model.repository';
-import { In, Repository } from 'typeorm';
-import { Network } from 'src/entities/stream/stream.entity';
+import { EntityManager, In, Repository } from 'typeorm';
+import { Network, Stream } from 'src/entities/stream/stream.entity';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import {
@@ -44,8 +44,36 @@ export default class ModelService {
     @InjectRepository(CeramicModelMainNet, 'mainnet')
     private readonly ceramicModelMainNetRepository: CeramicModelMainNetRepository,
 
+    @InjectEntityManager('testnet')
+    private testnetCeramicEntityManager: EntityManager,
+
+    @InjectEntityManager('mainnet')
+    private mainnetCeramicEntityManager: EntityManager,
+
     @InjectRedis() private readonly redis: Redis,
   ) { }
+
+  async getStreams(network: Network, modelStreamId: string, pageSize: number, pageNumber: number): Promise<any[]> {
+    let ceramicEntityManager: EntityManager;
+    network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
+
+    const mids = await ceramicEntityManager.query(`select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${pageSize * pageNumber}`)
+    if (mids.length == 0) return [];
+
+    return mids.map((mid: any) => {
+      return {
+        streamId: mid.stream_id,
+        controllerDid: mid.controller_did,
+        tip: mid.tip,
+        streamContent: mid.stream_content,
+        lastAnchoredAt: mid.last_anchored_at?.getTime(),
+        firstAnchoredAt: mid.first_anchored_at?.getTime(),
+        createdAt: mid.created_at?.getTime(),
+        updatedAt: mid.updated_at?.getTime(),
+      };
+    });
+  }
+
 
   // Currently only support testnet.
   async indexTopModelsForTestNet(topNum: number) {
