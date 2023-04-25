@@ -135,7 +135,7 @@ export class ModelController {
     );
   }
 
-  @Get('/:modelStreamId/streams')
+  @Get('/:modelStreamId/mids')
   @ApiQuery({
     name: 'pageNumber',
     required: false,
