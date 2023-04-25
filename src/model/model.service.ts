@@ -57,7 +57,7 @@ export default class ModelService {
     let ceramicEntityManager: EntityManager;
     network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
 
-    const mids = await ceramicEntityManager.query(`select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${pageSize * pageNumber}`)
+    const mids = await ceramicEntityManager.query(`select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${pageSize * (pageNumber - 1)}`)
     if (mids.length == 0) return [];
 
     return mids.map((mid: any) => {
