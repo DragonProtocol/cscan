@@ -177,7 +177,7 @@ export default class CeramicSubscriberService {
         'network',
         'stream_id',
       ]);
-      // this.logger.log(`Saved network(${network}) stream id(${streamId})`);
+      this.logger.log(`Saved network(${network}) stream id(${streamId})`);
       return savedStream;
     } catch (error) {
       this.logger.error(
