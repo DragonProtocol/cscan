@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  CeramicModelMainNet,
   CeramicModelTestNet,
   MetaModel,
   MetaModelMainnet,
 } from '../entities/model/model.entity';
 import {
+  CeramicModelMainNetRepository,
   CeramicModelTestNetRepository,
   MetaModelMainnetRepository,
   MetaModelRepository,
@@ -39,8 +41,11 @@ export default class ModelService {
     @InjectRepository(CeramicModelTestNet, 'testnet')
     private readonly ceramicModelTestNetRepository: CeramicModelTestNetRepository,
 
+    @InjectRepository(CeramicModelMainNet, 'mainnet')
+    private readonly ceramicModelMainNetRepository: CeramicModelMainNetRepository,
+
     @InjectRedis() private readonly redis: Redis,
-  ) {}
+  ) { }
 
   // Currently only support testnet.
   async indexTopModelsForTestNet(topNum: number) {
@@ -172,6 +177,17 @@ export default class ModelService {
       .select(['stream_id'])
       .getRawMany();
     return result.map((r) => r['stream_id']);
+  }
+
+  async findIndexedModelIds(network: Network, modelStreamIds: string[]): Promise<string[]> {
+    let models: any[] = [];
+    if (network == Network.MAINNET) {
+      models = await this.ceramicModelMainNetRepository.find({ where: { model: In(modelStreamIds) } });
+    } else if (network == Network.TESTNET) {
+      models = await this.ceramicModelTestNetRepository.find({ where: { model: In(modelStreamIds) } });
+    }
+
+    return models?.map(m => m.getModel);
   }
 
   async findModels(
