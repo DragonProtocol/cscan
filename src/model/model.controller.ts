@@ -90,7 +90,6 @@ export class ModelController {
       const modelStreamIds = metaModels.map((m) => m.getStreamId);
       const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
       const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
-      console.log('+++', indexedModelStreamIdSet);
 
       return new BasicMessageDto(
         'ok',
