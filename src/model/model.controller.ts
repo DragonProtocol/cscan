@@ -59,7 +59,7 @@ export class ModelController {
     required: false,
   })
   @ApiOkResponse({ type: BasicMessageDto })
-  async getStreams(
+  async getModels(
     @Query('name') name?: string,
     @Query('did') did?: string,
     @Query('description') description?: string,
@@ -87,6 +87,10 @@ export class ModelController {
         network,
       );
       if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
+      const modelStreamIds = metaModels.map((m) => m.getStreamId);
+      const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
+      const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
+
       return new BasicMessageDto(
         'ok',
         0,
@@ -94,6 +98,7 @@ export class ModelController {
           .map((m) => ({
             ...m,
             useCount: useCountMap?.get(m.getStreamId) ?? 0,
+            isIndexed: indexedModelStreamIdSet.has(m.getStreamId),
           }))
           .sort((a, b) => b.useCount - a.useCount),
       );
@@ -110,18 +115,21 @@ export class ModelController {
     );
     if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
 
-    const models = metaModels.map((m) => m.getStreamId);
+    const modelStreamIds = metaModels.map((m) => m.getStreamId);
     const useCountMap = await this.streamService.findModelUseCount(
       network,
-      models,
+      modelStreamIds,
     );
 
+    const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
+    const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
     return new BasicMessageDto(
       'ok',
       0,
       metaModels.map((m) => ({
         ...m,
         useCount: useCountMap?.get(m.getStreamId) ?? 0,
+        isIndexed: indexedModelStreamIdSet.has(m.getStreamId),
       })),
     );
   }
