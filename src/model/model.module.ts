@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   CeramicModelMainNet,
@@ -14,7 +14,7 @@ import { StreamModule } from '../stream/stream.module';
   imports: [
     TypeOrmModule.forFeature([MetaModel, CeramicModelTestNet], 'testnet'),
     TypeOrmModule.forFeature([MetaModelMainnet, CeramicModelMainNet], 'mainnet'),
-    StreamModule,
+    forwardRef(() => StreamModule),
   ],
   controllers: [ModelController],
   providers: [ModelService],

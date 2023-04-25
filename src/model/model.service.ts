@@ -279,4 +279,23 @@ export default class ModelService {
     });
     await this.redis.zadd(key, ...members);
   }
+
+  async getModelStatistics(
+    network: Network = Network.TESTNET,
+  ): Promise<any> {
+    const models = await this.getMetaModelRepository(network)
+      .createQueryBuilder('kh4q0ozorrgaq2mezktnrmdwleo1d')
+      .select(['kh4q0ozorrgaq2mezktnrmdwleo1d.created_at'])
+      .orderBy('created_at', 'DESC')
+      .getMany();
+    const now = Math.floor((new Date()).getTime()/1000) ;
+    const today = Math.floor(now / (24*3600)) * 24*3600;
+    let i = 0;
+    for(i=0; i<models.length; ++i) {
+      const t = Math.floor(models[i].getCreatedAt.getTime()/1000);
+      if(t < today) { break; }
+    }
+    return { totalModels: models.length, todayModels: i+1 }
+  }
+
 }
