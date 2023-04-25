@@ -34,7 +34,7 @@ export default class StreamService {
       if (whereSql.length > 0) {
         whereSql += ' AND ';
       }
-      whereSql += 'family IN (:...familyOrApps) OR domain IN (:...familyOrApps)';
+      whereSql += '(family IN (:...familyOrApps) OR domain IN (:...familyOrApps))';
     }
     if (did?.trim().length > 0) {
       if (whereSql.length > 0) {
