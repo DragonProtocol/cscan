@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import ModelService from 'src/model/model.service';
 import { Network, Status, Stream } from '../entities/stream/stream.entity';
 import { StreamRepository } from '../entities/stream/stream.repository';
 import { StatsDto } from './dtos/common.dto';
@@ -11,6 +12,7 @@ export default class StreamService {
   constructor(
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
+    private readonly modelService: ModelService,
   ) {}
 
   async findByStreamId(network: Network, streamId: string): Promise<Stream> {
@@ -197,16 +199,20 @@ export default class StreamService {
     network: Network,
   ): Promise<StatsDto> {
     const dto = new StatsDto();
-    let streams = await this.streamRepository
-      .createQueryBuilder('streams')
-      .select(['streams.id','streams.network', 'streams.created_at'])
-      .limit(20000)
-      .orderBy('id', 'DESC')
-      .getMany();
+
+    let [streams, modelStatistics] = await Promise.all([
+      this.streamRepository
+        .createQueryBuilder('streams')
+        .select(['streams.id','streams.network', 'streams.created_at'])
+        .limit(100000)
+        .orderBy('id', 'DESC')
+        .getMany()
+      ,this.modelService.getModelStatistics(network)            
+    ]);
 
     streams = streams.filter(e => e.getNetwork == network);
 
-    const now = Math.floor((new Date()).getTime()/100);
+    const now = Math.floor((new Date()).getTime()/1000);
     const t1 = Math.floor(streams[0].getCreatedAt.getTime() / 1000);
     const t2 = Math.floor(streams[streams.length-1].getCreatedAt.getTime() / 1000);
 
@@ -214,16 +220,16 @@ export default class StreamService {
     for(let i=0; i<streams.length; ++i) {
       const t = Math.floor(streams[i].getCreatedAt.getTime() / 1000);
       if(t > now) { continue; }
-      console.log('aaa ----------------', (now-t)/(24*3600));
       const idx = weeks.length - 1 - Math.floor((now - t) / (24*3600));
       if(idx < 0) { break; }
       weeks[idx] += 1;
-      console.log("---------", idx, weeks[idx]);
     }
 
     dto.totalStreams = streams[0].getId;
-    dto.streamsPerSecond = Math.floor((t1 - t2) / streams.length);
+    dto.streamsPerHour = Math.floor(streams.length * 3600 / (t1 - t2));
     dto.streamsLastWeek = weeks;
+    
+    Object.assign(dto, modelStatistics);
 
     return dto;
   }

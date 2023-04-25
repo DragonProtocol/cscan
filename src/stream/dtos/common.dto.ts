@@ -25,7 +25,7 @@ export class StatsDto {
   @ApiProperty()
   todayModels: number;
   @ApiProperty()
-  streamsPerSecond: number;
+  streamsPerHour: number;
   @ApiProperty()
   streamsLastWeek: number[];
 }
