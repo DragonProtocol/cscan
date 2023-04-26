@@ -5,6 +5,7 @@ import {
   Get,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -161,6 +162,21 @@ export class ModelController {
 
     const streams = await this.modelService.getStreams(network, modelStreamId, pageSize, pageNumber);
     return new BasicMessageDto('ok', 0, streams);
+  }
+
+  @Get('/:modelStreamId/mids/:midStreamId')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getMid(@Param('midStreamId') midStreamId: string,
+    @Query('network') network: Network = Network.TESTNET,
+    @Param('modelStreamId') modelStreamId: string,): Promise<BasicMessageDto> {
+    this.logger.log(`Seaching mid(${midStreamId}) on network ${network}.`);
+
+    const mid = await this.modelService.getMid(network, modelStreamId, midStreamId);
+    if (!mid) {
+      throw new NotFoundException(new BasicMessageDto(`midStreamId ${midStreamId} does not exist on network ${network}`, 0),
+      )
+    }
+    return new BasicMessageDto('ok', 0, mid);
   }
 
   @Cron('0/10 * * * *')

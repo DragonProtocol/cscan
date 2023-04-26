@@ -74,6 +74,27 @@ export default class ModelService {
     });
   }
 
+  async getMid(network: Network, modelStreamId: string, midStreamId: string): Promise<any> {
+
+    let ceramicEntityManager: EntityManager;
+    network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
+
+    const mids = await ceramicEntityManager.query(`select * from ${modelStreamId} where stream_id='${midStreamId}'`)
+    if (mids.length == 0) return;
+
+    const mid = mids[0];
+    return {
+      streamId: mid.stream_id,
+      controllerDid: mid.controller_did,
+      tip: mid.tip,
+      streamContent: mid.stream_content,
+      lastAnchoredAt: mid.last_anchored_at?.getTime(),
+      firstAnchoredAt: mid.first_anchored_at?.getTime(),
+      createdAt: mid.created_at?.getTime(),
+      updatedAt: mid.updated_at?.getTime(),
+    };
+  }
+
 
   // Currently only support testnet.
   async indexTopModelsForTestNet(topNum: number) {
@@ -316,14 +337,14 @@ export default class ModelService {
       .select(['kh4q0ozorrgaq2mezktnrmdwleo1d.created_at'])
       .orderBy('created_at', 'DESC')
       .getMany();
-    const now = Math.floor((new Date()).getTime()/1000) ;
-    const today = Math.floor(now / (24*3600)) * 24*3600;
+    const now = Math.floor((new Date()).getTime() / 1000);
+    const today = Math.floor(now / (24 * 3600)) * 24 * 3600;
     let i = 0;
-    for(i=0; i<models.length; ++i) {
-      const t = Math.floor(models[i].getCreatedAt.getTime()/1000);
-      if(t < today) { break; }
+    for (i = 0; i < models.length; ++i) {
+      const t = Math.floor(models[i].getCreatedAt.getTime() / 1000);
+      if (t < today) { break; }
     }
-    return { totalModels: models.length, todayModels: i+1 }
+    return { totalModels: models.length, todayModels: i + 1 }
   }
 
 }
