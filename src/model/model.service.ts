@@ -75,12 +75,13 @@ export default class ModelService {
   }
 
   async getMid(network: Network, modelStreamId: string, midStreamId: string): Promise<any> {
-
     let ceramicEntityManager: EntityManager;
     network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
 
     const mids = await ceramicEntityManager.query(`select * from ${modelStreamId} where stream_id='${midStreamId}'`)
     if (mids.length == 0) return;
+
+    const indexedModels = await this.findIndexedModelIds(network, [modelStreamId]);
 
     const mid = mids[0];
     return {
@@ -92,6 +93,7 @@ export default class ModelService {
       firstAnchoredAt: mid.first_anchored_at?.getTime(),
       createdAt: mid.created_at?.getTime(),
       updatedAt: mid.updated_at?.getTime(),
+      isIndexed: indexedModels.length == 1,
     };
   }
 
