@@ -345,4 +345,11 @@ export class ModelController {
       throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
     }
   }
+
+  @ApiOkResponse({ type: BasicMessageDto })
+  @Post('/ids')
+  async getModelsByIds(@Body() dto: {network: Network, ids: string[]}) {
+    const models = await this.modelService.findModelsByIds(dto.ids, dto.network);
+    return new BasicMessageDto('ok', 0, models);
+  }
 }
