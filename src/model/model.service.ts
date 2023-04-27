@@ -97,6 +97,30 @@ export default class ModelService {
     };
   }
 
+  async getModel(network: Network, modelStreamId: string): Promise<any> {
+    let ceramicEntityManager: EntityManager;
+    network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
+
+    const metaModel = 'kh4q0ozorrgaq2mezktnrmdwleo1d';
+    const mids = await ceramicEntityManager.query(`select * from ${metaModel} where stream_id='${modelStreamId}'`)
+    if (mids.length == 0) return;
+
+    const indexedModels = await this.findIndexedModelIds(network, [modelStreamId]);
+
+    const mid = mids[0];
+    return {
+      streamId: mid.stream_id,
+      controllerDid: mid.controller_did,
+      tip: mid.tip,
+      streamContent: mid.stream_content,
+      lastAnchoredAt: mid.last_anchored_at?.getTime(),
+      firstAnchoredAt: mid.first_anchored_at?.getTime(),
+      createdAt: mid.created_at?.getTime(),
+      updatedAt: mid.updated_at?.getTime(),
+      isIndexed: indexedModels.length == 1,
+    };
+  }
+
 
   // Currently only support testnet.
   async indexTopModelsForTestNet(topNum: number) {

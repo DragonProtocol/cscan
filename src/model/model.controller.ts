@@ -352,4 +352,19 @@ export class ModelController {
     const models = await this.modelService.findModelsByIds(dto.ids, dto.network);
     return new BasicMessageDto('ok', 0, models);
   }
+
+  @Get('/:modelStreamId')
+  @ApiOkResponse({ type: BasicMessageDto })
+  async getModel(
+    @Query('network') network: Network = Network.TESTNET,
+    @Param('modelStreamId') modelStreamId: string,): Promise<BasicMessageDto> {
+    this.logger.log(`Seaching model(${modelStreamId}) on network ${network}.`);
+
+    const mid = await this.modelService.getModel(network, modelStreamId);
+    if (!mid) {
+      throw new NotFoundException(new BasicMessageDto(`modelStreamId ${modelStreamId} does not exist on network ${network}`, 0),
+      )
+    }
+    return new BasicMessageDto('ok', 0, mid);
+  }
 }
