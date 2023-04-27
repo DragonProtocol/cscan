@@ -4,6 +4,9 @@ import ModelService from 'src/model/model.service';
 import { Network, Status, Stream } from '../entities/stream/stream.entity';
 import { StreamRepository } from '../entities/stream/stream.repository';
 import { StatsDto } from './dtos/common.dto';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import Redis from 'ioredis';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export default class StreamService {
@@ -13,6 +16,7 @@ export default class StreamService {
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
     private readonly modelService: ModelService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async findByStreamId(network: Network, streamId: string): Promise<Stream> {
@@ -151,7 +155,21 @@ export default class StreamService {
     return useCountMap;
   }
 
+  @Cron('*/2 * * * *')
+  async getTopicsTimer() {
+    this.getTopicsJob(Network.MAINNET);
+    this.getTopicsJob(Network.TESTNET);
+  }
+
   async getTopics(
+    network: Network,
+  ) {
+    const val = await this.redis.get(`cscan-streams-topics-${network}`);
+    if(!val) { return {} }
+    return JSON.parse(val);
+  }
+
+  async getTopicsJob(
     network: Network,
   ): Promise<any> {
     const sortmap = (map) => {
@@ -163,12 +181,16 @@ export default class StreamService {
       return sortmap(map).map(e => ( { name: e[0], num: e[1] } ) )
     };
 
+    console.time(`${network}-getTopics`);
+
     const streams = await this.streamRepository
       .createQueryBuilder('streams')
       .select(['streams.id', 'streams.family', 'streams.domain', 'streams.network'])
-      .limit(100000)
+      .limit(200000)
       .orderBy('id', 'DESC')
       .getMany();
+
+    console.timeEnd(`${network}-getTopics`);
 
     const familyMap = new Map<string, number>();      
     const domainMap = new Map<string, number>();     
@@ -189,30 +211,55 @@ export default class StreamService {
       if(key) { map.set(key, (map.get(key)??0)+1); }
     })
     
-    return {
+    const res = {
       familys: sortmapex(familyMap),
       domains: sortmapex(domainMap),
     };
+
+    await this.redis.set(`cscan-streams-topics-${network}`, JSON.stringify(res));
+
+    return res;
   }
 
   async getStats(
     network: Network,
   ): Promise<StatsDto> {
+    const val = await this.redis.get(`cscan-stats-${network}`);
+    if(!val) { return new StatsDto() }
+    return JSON.parse(val);
+  }
+
+  @Cron('*/2 * * * *')
+  async getStatsTimer() {
+    this.getStatsJob(Network.MAINNET);
+    this.getStatsJob(Network.TESTNET);
+  }
+
+  async getStatsJob(
+    network: Network,
+  ): Promise<StatsDto> {
+
     const dto = new StatsDto();
+
+    const now = Math.floor((new Date()).getTime() / 1000);
+    const weekAgo = new Date((now - 7*24*3600)*1000);
+
+    console.time(`${network}-getStats`);
 
     let [streams, modelStatistics] = await Promise.all([
       this.streamRepository
         .createQueryBuilder('streams')
         .select(['streams.id','streams.network', 'streams.created_at'])
-        .limit(100000)
-        .orderBy('id', 'DESC')
+        .where('created_at BETWEEN :start AND :end', { start: weekAgo, end: new Date() })
+        .orderBy('created_at', 'DESC')
         .getMany()
       ,this.modelService.getModelStatistics(network)            
     ]);
 
+    console.timeEnd(`${network}-getStats`);
+
     streams = streams.filter(e => e.getNetwork == network);
 
-    const now = Math.floor((new Date()).getTime()/1000);
     const t1 = Math.floor(streams[0].getCreatedAt.getTime() / 1000);
     const t2 = Math.floor(streams[streams.length-1].getCreatedAt.getTime() / 1000);
 
@@ -230,6 +277,8 @@ export default class StreamService {
     dto.streamsLastWeek = weeks;
     
     Object.assign(dto, modelStatistics);
+
+    await this.redis.set(`cscan-stats-${network}`, JSON.stringify(dto));
 
     return dto;
   }
