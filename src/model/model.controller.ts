@@ -181,20 +181,19 @@ export class ModelController {
 
   @Cron('0/10 * * * *')
   @Post('/usecount/build')
-  async buildUseCount(
-    @Query('network') network: Network = Network.TESTNET,
-  ): Promise<BasicMessageDto> {
-    const models = await this.modelService.findAllModelIds(network);
-    this.logger.log(`All ${network} model count: ${models?.length}`);
-    const useCountMap = await this.streamService.findAllModelUseCount(
-      network,
-      models,
-    );
-    if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
-    await this.modelService.updateModelUseCount(network, useCountMap);
-    return new BasicMessageDto('ok', 0, {
-      'useCountMap.size': useCountMap.size,
-    });
+  async buildUseCount(): Promise<BasicMessageDto> {
+    const networks = [Network.TESTNET, Network.MAINNET];
+    for await (const network of networks) {
+      const models = await this.modelService.findAllModelIds(network);
+      this.logger.log(`All ${network} model count: ${models?.length}`);
+      const useCountMap = await this.streamService.findAllModelUseCount(
+        network,
+        models,
+      );
+      if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, {});
+      await this.modelService.updateModelUseCount(network, useCountMap);
+    }
+    return new BasicMessageDto('ok', 0);
   }
 
   @Post('/indexing')
@@ -348,7 +347,7 @@ export class ModelController {
 
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/ids')
-  async getModelsByIds(@Body() dto: {network: Network, ids: string[]}) {
+  async getModelsByIds(@Body() dto: { network: Network, ids: string[] }) {
     const models = await this.modelService.findModelsByIds(dto.ids, dto.network);
     return new BasicMessageDto('ok', 0, models);
   }
