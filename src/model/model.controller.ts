@@ -83,11 +83,14 @@ export class ModelController {
         pageNumber,
       );
       if (useCountMap?.size == 0) return new BasicMessageDto('ok', 0, []);
+      this.logger.log(`${network} model usecount ${useCountMap}`);
 
       const metaModels = await this.modelService.findModelsByIds(
         Array.from(useCountMap.keys()),
         network,
       );
+      this.logger.log(`${network} model ${metaModels}`);
+
       if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
       const modelStreamIds = metaModels.map((m) => m.getStreamId);
       const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
