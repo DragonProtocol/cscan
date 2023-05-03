@@ -239,47 +239,54 @@ export default class StreamService {
     network: Network,
   ): Promise<StatsDto> {
 
-    const dto = new StatsDto();
+    try {
+      const dto = new StatsDto();
 
-    const now = Math.floor((new Date()).getTime() / 1000);
-    const weekAgo = new Date((now - 7*24*3600)*1000);
+      const now = Math.floor((new Date()).getTime() / 1000);
+      const weekAgo = new Date((now - 7*24*3600)*1000);
 
-    console.time(`${network}-getStats`);
+      console.time(`${network}-getStats`);
 
-    let [streams, modelStatistics] = await Promise.all([
-      this.streamRepository
-        .createQueryBuilder('streams')
-        .select(['streams.id','streams.network', 'streams.created_at'])
-        .where('created_at BETWEEN :start AND :end', { start: weekAgo, end: new Date() })
-        .orderBy('created_at', 'DESC')
-        .getMany()
-      ,this.modelService.getModelStatistics(network)            
-    ]);
+      let [streams, modelStatistics] = await Promise.all([
+	this.streamRepository
+	.createQueryBuilder('streams')
+	.select(['streams.id','streams.network', 'streams.created_at'])
+	.where('created_at BETWEEN :start AND :end', { start: weekAgo, end: new Date() })
+	.orderBy('created_at', 'DESC')
+	.getMany()
+	,this.modelService.getModelStatistics(network)            
+	]);
 
-    console.timeEnd(`${network}-getStats`);
+      console.timeEnd(`${network}-getStats`);
 
-    streams = streams.filter(e => e.getNetwork == network);
+      streams = streams.filter(e => e.getNetwork == network);
 
-    const t1 = Math.floor(streams[0].getCreatedAt.getTime() / 1000);
-    const t2 = Math.floor(streams[streams.length-1].getCreatedAt.getTime() / 1000);
+      if(!streams || streams.length == 0) { console.log("getStatsJob found no streams"); return dto; }
+      
+      const t1 = Math.floor(streams[0].getCreatedAt.getTime() / 1000);
+      const t2 = Math.floor(streams[streams.length-1].getCreatedAt.getTime() / 1000);
 
-    const weeks = [0,0,0,0,0,0,0];
-    for(let i=0; i<streams.length; ++i) {
-      const t = Math.floor(streams[i].getCreatedAt.getTime() / 1000);
-      if(t > now) { continue; }
-      const idx = weeks.length - 1 - Math.floor((now - t) / (24*3600));
-      if(idx < 0) { break; }
-      weeks[idx] += 1;
+      const weeks = [0,0,0,0,0,0,0];
+      for(let i=0; i<streams.length; ++i) {
+	const t = Math.floor(streams[i].getCreatedAt.getTime() / 1000);
+	if(t > now) { continue; }
+	const idx = weeks.length - 1 - Math.floor((now - t) / (24*3600));
+	if(idx < 0) { break; }
+	weeks[idx] += 1;
+      }
+
+      dto.totalStreams = streams[0].getId;
+      dto.streamsPerHour = Math.floor(streams.length * 3600 / (t1 - t2));
+      dto.streamsLastWeek = weeks;
+      
+      Object.assign(dto, modelStatistics);
+
+      await this.redis.set(`cscan-stats-${network}`, JSON.stringify(dto));
+
+      return dto;
+      
+    } catch(e) {
+      console.log(`get StatsJob failed: ${e}`);
     }
-
-    dto.totalStreams = streams[0].getId;
-    dto.streamsPerHour = Math.floor(streams.length * 3600 / (t1 - t2));
-    dto.streamsLastWeek = weeks;
-    
-    Object.assign(dto, modelStatistics);
-
-    await this.redis.set(`cscan-stats-${network}`, JSON.stringify(dto));
-
-    return dto;
   }
 }
