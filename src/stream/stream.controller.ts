@@ -167,7 +167,7 @@ export class StreamController {
 
     let ceramic;
     if (network == Network.MAINNET) {
-      ceramic = new CeramicClient(process.env.CERAMIC_NODE_MAINET);
+      ceramic = new CeramicClient(process.env.CERAMIC_NODE_MAINNET);
     } else {
       ceramic = new CeramicClient(process.env.CERAMIC_NODE);
     }
