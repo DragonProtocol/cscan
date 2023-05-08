@@ -2599,6 +2599,14 @@
     "@opentelemetry/instrumentation" "^0.35.1"
     "@opentelemetry/semantic-conventions" "^1.0.0"
 
+"@opentelemetry/instrumentation-nestjs-core@^0.32.3":
+  version "0.32.3"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-nestjs-core/-/instrumentation-nestjs-core-0.32.3.tgz#c1e5573d4f37f1e4e0e51520c47253a34c79d564"
+  integrity sha512-6rfI0+k/UJeabaJM172kuabTTKcthz5P3WPp0PXETvZ7uQwauZlxyrnIwoU6iE3ugTsFl1ep4VZuPwNAEIPKnQ==
+  dependencies:
+    "@opentelemetry/instrumentation" "^0.38.0"
+    "@opentelemetry/semantic-conventions" "^1.0.0"
+
 "@opentelemetry/instrumentation-net@^0.31.1":
   version "0.31.1"
   resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-net/-/instrumentation-net-0.31.1.tgz#d4bcdc7412114f739130168b7a0a341944bab2a0"
@@ -2693,7 +2701,7 @@
     semver "^7.3.2"
     shimmer "^1.2.1"
 
-"@opentelemetry/instrumentation@0.38.0":
+"@opentelemetry/instrumentation@0.38.0", "@opentelemetry/instrumentation@^0.38.0":
   version "0.38.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation/-/instrumentation-0.38.0.tgz#e97c6d4ea699006ec2541fd83b26a10f0edaada4"
   integrity sha512-wr1WkIbzHGV+oz6SCme88D2c+zNG23COkCjcida8b3jIzX2lJafOpEHPDcbBF38F8ChkRSj/tVnx1wnYAXZvbA==

@@ -5,8 +5,6 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import * as opentelemetry from '@opentelemetry/sdk-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 
 // Configure the SDK to export telemetry data to the console
 // Enable all auto-instrumentations from the meta package
@@ -18,9 +16,16 @@ const traceExporter = new OTLPTraceExporter(exporterOptions);
 const sdk = new opentelemetry.NodeSDK({
   traceExporter,
   instrumentations: [
-    getNodeAutoInstrumentations(),
-    new HttpInstrumentation(),
-    new ExpressInstrumentation(),
+    getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-express': {
+        requestHook: (span, reqInfo) => {
+          span.setAttribute(
+            'request-headers',
+            JSON.stringify(reqInfo.request.headers),
+          );
+        },
+      },
+    }),
   ],
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: process.env.APM_NAME,

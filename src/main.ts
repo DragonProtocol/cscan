@@ -1,13 +1,15 @@
+import tracer from './tracer';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Network } from './entities/stream/stream.entity';
 import CeramicSubscriberService from './stream/ceramic.subscriber.service';
-import tracer from './tracer';
-
 
 async function bootstrap() {
+  // init the apm
+  await tracer.start();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = new DocumentBuilder()
     .setTitle('userscan')
@@ -19,8 +21,6 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors();
-
-  await tracer.start();
 
   await app.listen(3000);
 
