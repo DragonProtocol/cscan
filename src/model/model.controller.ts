@@ -351,7 +351,20 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/ids')
   async getModelsByIds(@Body() dto: { network: Network, ids: string[] }) {
-    const models = await this.modelService.findModelsByIds(dto.ids, dto.network);
+
+    const [models, useCountMap, indexedModelStreamIds] = await Promise.all([
+      this.modelService.findModelsByIds(dto.ids, dto.network)
+      , this.streamService.findModelUseCount(dto.network, dto.ids)
+      , this.modelService.findIndexedModelIds(dto.network, dto.ids)
+    ]);
+
+    const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
+
+    models.forEach(e => {
+      e.useCount = useCountMap?.get(e.getStreamId) ?? 0,
+      e.isIndexed = indexedModelStreamIdSet.has(e.getStreamId);
+    });
+
     return new BasicMessageDto('ok', 0, models);
   }
 
