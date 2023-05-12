@@ -8,6 +8,8 @@ import { StreamModule } from './stream/stream.module';
 import { ModelModule } from './model/model.module';
 import 'dotenv/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { HealthModule } from './health/health.module';
+
 
 const env: string | undefined = process.env.NODE_ENV;
 
@@ -55,6 +57,7 @@ const env: string | undefined = process.env.NODE_ENV;
       ttl: +process.env.THROTTLE_TTL,
       limit: +process.env.THROTTLE_LIMIT,
     }),
+    HealthModule,
     StreamModule,
     ModelModule,
     RedisModule.forRoot({
