@@ -53,11 +53,10 @@ export default class CeramicSubscriberService {
     try {
       const ipfsHttpClient = await _importDynamic('ipfs-http-client');
       const ipfs = await ipfsHttpClient.create({
-        url: 'https://cloudflare-ipfs.com',
+        url: 'https://ipfs.io',
       });
 
       const genesisDag = await ipfs.dag.get(cid, { timeout: 6000 });
-
       if (!genesisDag?.value) return;
 
       const { base64urlToJSON } = await _importDynamic(
@@ -73,7 +72,7 @@ export default class CeramicSubscriberService {
       const cacaoCid = CID.parse(capIPFSUri.replace('ipfs://', ''));
       if (!cacaoCid) return;
 
-      cacaoDag = await ipfs.dag.get(cacaoCid);
+      cacaoDag = await ipfs.dag.get(cacaoCid, { timeout: 6000 });
     } catch (error) {
       this.logger.warn(`get Cacao err, cid:${cid} error:${error}`);
     }
