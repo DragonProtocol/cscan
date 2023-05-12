@@ -323,21 +323,36 @@ export class ModelController {
     const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
 
     try {
+      console.time('initing ceramic client');
       const ceramic = new CeramicClient(getCeramicNode(dto.network));
+      console.timeEnd('initing ceramic client');
+
       // build all model stream ids for the model
+      console.time('fetching relation model streamIds');
       const allModelStreamIds = [];
       for await (const streamId of dto.models) {
         const relationModelStreamIds =
           await this.streamService.getRelationStreamIds(ceramic, streamId);
         allModelStreamIds.push(...relationModelStreamIds);
       }
+      console.timeEnd('fetching relation model streamIds');
+
       // buid composite
+      console.time('creating composite');
       const composite = await Composite.fromModels({
         ceramic: ceramic,
         models: [...dto.models, ...allModelStreamIds],
       });
+      console.timeEnd('creating composite');
+
+      console.time('creating runtimeDefinition');
       const runtimeDefinition = composite.toRuntime();
+      console.timeEnd('creating runtimeDefinition');
+
+      console.time('buiding graphqlSchema');
       const graphqlSchema = printGraphQLSchema(runtimeDefinition);
+      console.timeEnd('buiding graphqlSchema');
+
       return new BasicMessageDto('ok', 0, {
         composite,
         runtimeDefinition,
