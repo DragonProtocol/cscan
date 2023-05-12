@@ -41,16 +41,16 @@ async function bootstrap() {
   );
 
   // Sub ceramic main network.
-  // await ceramicSubscriberService.SubCeramic(
-  //   Network.MAINNET,
-  //   [
-  //     '/dns4/go-ipfs-ceramic-private-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmXALVsXZwPWTUbsT8G6VVzzgTJaAWRUD7FWL5f7d5ubAL',
-  //     '/dns4/go-ipfs-ceramic-private-cas-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmUvEKXuorR7YksrVgA7yKGbfjWHuCRisw2cH9iqRVM9P8',
-  //   ],
-  //   ['/ip4/127.0.0.1/tcp/30000/ws'],
-  //   '/ceramic/mainnet',
-  //   // 'https://gateway.ceramic.network/',
-  //   'http://3.27.88.154:7007/'
-  // );
+  await ceramicSubscriberService.SubCeramic(
+    Network.MAINNET,
+    [
+      '/dns4/go-ipfs-ceramic-private-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmXALVsXZwPWTUbsT8G6VVzzgTJaAWRUD7FWL5f7d5ubAL',
+      '/dns4/go-ipfs-ceramic-private-cas-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmUvEKXuorR7YksrVgA7yKGbfjWHuCRisw2cH9iqRVM9P8',
+    ],
+    ['/ip4/127.0.0.1/tcp/30000/ws'],
+    '/ceramic/mainnet',
+    // 'https://gateway.ceramic.network/',
+    'http://a7b9b577480cc4ae8996520381260aee-872342852.ap-southeast-1.elb.amazonaws.com:7007/'
+  );
 }
 bootstrap();
