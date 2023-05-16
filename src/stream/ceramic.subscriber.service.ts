@@ -11,7 +11,7 @@ export default class CeramicSubscriberService {
   constructor(
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
-  ) {}
+  ) { }
   async SubCeramic(
     network: Network,
     bootstrapMultiaddrs: string[],
@@ -31,15 +31,16 @@ export default class CeramicSubscriberService {
         if (parsed.typ == 0) {
           // MsgType: UPDATE
           await this.store(ceramic, network, parsed.stream);
-        } else if (parsed.typ == 2) {
-          // MsgType: RESPONSE
-          const streamIds = Object.keys(parsed.tips);
-          await Promise.all(
-            streamIds?.map(async (streamId) => {
-              await this.store(ceramic, network, streamId);
-            }),
-          );
         }
+        // else if (parsed.typ == 2) {
+        //   // MsgType: RESPONSE
+        //   const streamIds = Object.keys(parsed.tips);
+        //   await Promise.all(
+        //     streamIds?.map(async (streamId) => {
+        //       await this.store(ceramic, network, streamId);
+        //     }),
+        //   );
+        // }
       } catch (error) {
         this.logger.error(
           `ceramic sub err, messgage:${message} error:${error}`,
