@@ -340,6 +340,7 @@ export class ModelController {
 
       // buid composite
       console.time('creating composite');
+      console.log('creating composite models:', dto.models, allModelStreamIds);
       const composite = await Composite.fromModels({
         ceramic: ceramic,
         models: [...dto.models, ...allModelStreamIds],
@@ -378,7 +379,7 @@ export class ModelController {
 
     models.forEach(e => {
       e.useCount = useCountMap?.get(e.getStreamId) ?? 0,
-      e.isIndexed = indexedModelStreamIdSet.has(e.getStreamId);
+        e.isIndexed = indexedModelStreamIdSet.has(e.getStreamId);
     });
 
     return new BasicMessageDto('ok', 0, models);
