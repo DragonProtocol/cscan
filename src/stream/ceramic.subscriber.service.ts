@@ -74,7 +74,7 @@ export default class CeramicSubscriberService {
 
       cacaoDag = await ipfs.dag.get(cacaoCid, { timeout: 6000 });
     } catch (error) {
-      this.logger.warn(`get Cacao err, cid:${cid} error:${error}`);
+      // this.logger.warn(`get Cacao err, cid:${cid} error:${error}`);
     }
 
     return cacaoDag;
@@ -176,14 +176,14 @@ export default class CeramicSubscriberService {
         'network',
         'stream_id',
       ]);
-      this.logger.log(`Saved network(${network}) stream id(${streamId})`);
+      // this.logger.log(`Saved network(${network}) stream id(${streamId})`);
       return savedStream;
     } catch (error) {
-      this.logger.error(
-        `To store network(${network}) stream(${streamId}) err:${JSON.stringify(
-          error,
-        )}`,
-      );
+      // this.logger.error(
+      //   `To store network(${network}) stream(${streamId}) err:${JSON.stringify(
+      //     error,
+      //   )}`,
+      // );
     }
   }
 
