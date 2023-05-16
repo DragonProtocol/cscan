@@ -28,6 +28,11 @@ const env: string | undefined = process.env.NODE_ENV;
       logging: false,
       entities: ['dist/**/*.entity{.ts,.js}'],
       type: 'postgres',
+      pool: {
+        max: 20,
+        min: 10,
+        idleTimeoutMillis: 60000,
+      },
       extra: {
         ssl: {
           rejectUnauthorized: false,
@@ -46,6 +51,11 @@ const env: string | undefined = process.env.NODE_ENV;
       entities: ['dist/**/*.entity{.ts,.js}'],
       type: 'postgres',
       ssl: true,
+      pool: {
+        max: 20,
+        min: 10,
+        idleTimeoutMillis: 60000,
+      },
       extra: {
         ssl: {
           rejectUnauthorized: false,
