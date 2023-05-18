@@ -31,6 +31,7 @@ export default class CeramicSubscriberService {
         if (parsed.typ == 0) {
           // MsgType: UPDATE
           await this.store(ceramic, network, parsed.stream);
+          console.log('p2p message:', parsed);
         }
         // else if (parsed.typ == 2) {
         //   // MsgType: RESPONSE
