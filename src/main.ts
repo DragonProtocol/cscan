@@ -36,7 +36,8 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/20000/ws'],
     '/ceramic/testnet-clay',
-    'https://ceramic-clay.3boxlabs.com/'
+    // 'https://ceramic-clay.3boxlabs.com/'
+    'http://ad497108e5a364981b9c97eb1fd3fb47-710717156.ap-southeast-1.elb.amazonaws.com:7007/'
   );
 
   // Sub ceramic main network.
