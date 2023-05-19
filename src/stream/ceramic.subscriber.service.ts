@@ -44,7 +44,7 @@ export default class CeramicSubscriberService {
         // }
       } catch (error) {
         this.logger.error(
-          `ceramic sub err, messgage:${message} error:${error}`,
+          `${network} ceramic sub err, messgage:${message} error:${error}`,
         );
       }
     });
