@@ -41,7 +41,7 @@ async function bootstrap() {
   );
 
   // Sub ceramic main network.
-  await ceramicSubscriberService.SubCeramic(
+  await ceramicSubscriberService.subCeramic(
     Network.MAINNET,
     [
       '/dns4/go-ipfs-ceramic-private-mainnet-external.3boxlabs.com/tcp/4011/ws/p2p/QmXALVsXZwPWTUbsT8G6VVzzgTJaAWRUD7FWL5f7d5ubAL',
