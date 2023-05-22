@@ -27,7 +27,7 @@ async function bootstrap() {
   const ceramicSubscriberService = app.get(CeramicSubscriberService);
 
   // Sub ceramic test network.
-  await ceramicSubscriberService.SubCeramic(
+  await ceramicSubscriberService.subCeramic(
     Network.TESTNET,
     [
       '/dns4/go-ipfs-ceramic-public-clay-external.3boxlabs.com/tcp/4011/ws/p2p/QmWiY3CbNawZjWnHXx3p3DXsg21pZYTj4CRY1iwMkhP8r3',
