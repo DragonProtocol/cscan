@@ -37,7 +37,7 @@ async function bootstrap() {
     ['/ip4/127.0.0.1/tcp/20000/ws'],
     '/ceramic/testnet-clay',
     // 'https://ceramic-clay.3boxlabs.com/'
-    'http://ad497108e5a364981b9c97eb1fd3fb47-710717156.ap-southeast-1.elb.amazonaws.com:7007/'
+    'http://a04ed0da8e41a46dc894453455eab3a6-1650927376.ap-southeast-1.elb.amazonaws.com:7007/'
   );
 
   // Sub ceramic main network.
@@ -50,7 +50,7 @@ async function bootstrap() {
     ['/ip4/127.0.0.1/tcp/30000/ws'],
     '/ceramic/mainnet',
     // 'https://gateway.ceramic.network/',
-    'http://a9f6aaba5bc61415286ccee3220ec9f5-1768786203.ap-southeast-1.elb.amazonaws.com:7007/'
+    'http://a944175f92d624e169760d9418f259f3-1543294141.ap-southeast-1.elb.amazonaws.com:7007/'
   );
 }
 bootstrap();
