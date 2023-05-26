@@ -63,7 +63,7 @@ export default class StreamService {
       })
       .limit(pageSize)
       .offset(pageSize * (pageNumber - 1))
-      .orderBy('created_at', 'DESC')
+      .orderBy('last_modified_at', 'DESC')
       .getMany();
   }
 
