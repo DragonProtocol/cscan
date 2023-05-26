@@ -30,7 +30,9 @@ export default class CeramicSubscriberService {
         const parsed = JSON.parse(asString);
         if (parsed.typ == 0) {
           // MsgType: UPDATE
-          this.logger.log(`${network}, sub p2p message: ${parsed}`);
+          this.logger.log(
+            `${network}, sub p2p message: ${JSON.stringify(parsed)}`,
+          );
           await this.store(ceramic, network, parsed.stream);
         }
         // else if (parsed.typ == 2) {
