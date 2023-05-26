@@ -30,7 +30,7 @@ export default class CeramicSubscriberService {
         const parsed = JSON.parse(asString);
         if (parsed.typ == 0) {
           // MsgType: UPDATE
-          // console.log(network, ' p2p message:', parsed);
+          console.log(network, ' p2p message:', parsed);
           await this.store(ceramic, network, parsed.stream);
         }
         // else if (parsed.typ == 2) {
@@ -178,7 +178,7 @@ export default class CeramicSubscriberService {
         'network',
         'stream_id',
       ]);
-      // this.logger.log(`Saved network(${network}) stream id(${streamId})`);
+      this.logger.log(`Saved network(${network}) stream id(${streamId})`);
       return savedStream;
     } catch (error) {
       // this.logger.error(
