@@ -18,6 +18,9 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import {
   S3_MAINNET_MODELS_USE_COUNT_ZSET,
+  S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX,
+  S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX,
+  S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX,
   S3_TESTNET_MODELS_USE_COUNT_ZSET,
 } from 'src/common/constants';
 import { Cron } from '@nestjs/schedule';
@@ -53,6 +56,41 @@ export default class ModelService {
     @InjectRedis() private readonly redis: Redis,
   ) { }
 
+  async saveModelGraphCache(model: string, composite: any,
+    runtimeDefinition: any,
+    graphqlSchema: any) {
+    try {
+      const pipeline = this.redis.pipeline();
+      pipeline.set(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model, JSON.stringify(composite));
+      pipeline.set(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + model, JSON.stringify(runtimeDefinition));
+      pipeline.set(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + model, graphqlSchema);
+      const results = await pipeline.exec();
+      this.logger.log(`Saving model ${model} graph cache result ${results}`);
+    } catch (error) {
+      this.logger.error(`Saving model ${model} graph cache err ${error}`);
+    }
+  }
+
+  async getModelGraphCache(model: string):Promise<any> {
+    try {
+      const conposite = await this.redis.get(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model);
+      const runtimeDefinition = await this.redis.get(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + model);
+      const graphqlSchema = await this.redis.get(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + model);
+      if (conposite && runtimeDefinition && graphqlSchema){
+        this.logger.log(`Getting model ${model} graph cache conposite ${JSON.parse(conposite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
+        return {
+          conposite: JSON.parse(conposite),
+          runtimeDefinition: JSON.parse(runtimeDefinition),
+          graphqlSchema: graphqlSchema,
+        };
+      }
+      return;
+    } catch (error) {
+      this.logger.error(`Getting model ${model} graph cache err ${error}`);
+    }
+  }
+
+
   async getStreams(network: Network, modelStreamId: string, pageSize: number, pageNumber: number): Promise<any[]> {
     let ceramicEntityManager: EntityManager;
     network == Network.MAINNET ? ceramicEntityManager = this.mainnetCeramicEntityManager : ceramicEntityManager = this.testnetCeramicEntityManager;
@@ -60,7 +98,7 @@ export default class ModelService {
     let mids = [];
     try {
       mids = await ceramicEntityManager.query(`select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${pageSize * (pageNumber - 1)}`)
-    } catch (error) { 
+    } catch (error) {
       this.logger.error(`querying model ${modelStreamId} err: ${error}`);
     }
     if (mids?.length == 0) return [];
