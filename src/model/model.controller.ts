@@ -317,51 +317,62 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/graphql')
   async ModelIdToGraphql(@Body() dto: ModelIdToGaphqlDto) {
-    const { CeramicClient } = await importDynamic(
-      '@ceramicnetwork/http-client',
-    );
-    const { Composite } = await importDynamic('@composedb/devtools');
-    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+    if (dto.models?.length != 1) {
+      throw new BadRequestException('models\' length is not 1.');
+    }
 
-    try {
-      console.time('initing ceramic client');
-      const ceramic = new CeramicClient(getCeramicNode(dto.network));
-      console.timeEnd('initing ceramic client');
+    const graphCache = await this.modelService.getModelGraphCache(dto.models[0]);
+    if (graphCache) {
+      return new BasicMessageDto('ok', 0, graphCache);
+    } else {
+      try {
+        const { CeramicClient } = await importDynamic(
+          '@ceramicnetwork/http-client',
+        );
+        const { Composite } = await importDynamic('@composedb/devtools');
+        const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+        console.time('initing ceramic client');
+        const ceramic = new CeramicClient(getCeramicNode(dto.network));
+        console.timeEnd('initing ceramic client');
 
-      // build all model stream ids for the model
-      console.time('fetching relation model streamIds');
-      const allModelStreamIds = [];
-      for await (const streamId of dto.models) {
-        const relationModelStreamIds =
-          await this.streamService.getRelationStreamIds(ceramic, streamId);
-        allModelStreamIds.push(...relationModelStreamIds);
+        // build all model stream ids for the model
+        console.time('fetching relation model streamIds');
+        const allModelStreamIds = [];
+        for await (const streamId of dto.models) {
+          const relationModelStreamIds =
+            await this.streamService.getRelationStreamIds(ceramic, streamId);
+          allModelStreamIds.push(...relationModelStreamIds);
+        }
+        console.timeEnd('fetching relation model streamIds');
+
+        // buid composite
+        console.time('creating composite');
+        console.log('creating composite models:', dto.models, allModelStreamIds);
+        const composite = await Composite.fromModels({
+          ceramic: ceramic,
+          models: [...dto.models, ...allModelStreamIds],
+        });
+        console.timeEnd('creating composite');
+
+        console.time('creating runtimeDefinition');
+        const runtimeDefinition = composite.toRuntime();
+        console.timeEnd('creating runtimeDefinition');
+
+        console.time('buiding graphqlSchema');
+        const graphqlSchema = printGraphQLSchema(runtimeDefinition);
+        console.timeEnd('buiding graphqlSchema');
+
+        // cache the model graph info
+        await this.modelService.saveModelGraphCache(dto.models[0], composite, runtimeDefinition, graphqlSchema);
+
+        return new BasicMessageDto('ok', 0, {
+          composite,
+          runtimeDefinition,
+          graphqlSchema,
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
       }
-      console.timeEnd('fetching relation model streamIds');
-
-      // buid composite
-      console.time('creating composite');
-      console.log('creating composite models:', dto.models, allModelStreamIds);
-      const composite = await Composite.fromModels({
-        ceramic: ceramic,
-        models: [...dto.models, ...allModelStreamIds],
-      });
-      console.timeEnd('creating composite');
-
-      console.time('creating runtimeDefinition');
-      const runtimeDefinition = composite.toRuntime();
-      console.timeEnd('creating runtimeDefinition');
-
-      console.time('buiding graphqlSchema');
-      const graphqlSchema = printGraphQLSchema(runtimeDefinition);
-      console.timeEnd('buiding graphqlSchema');
-
-      return new BasicMessageDto('ok', 0, {
-        composite,
-        runtimeDefinition,
-        graphqlSchema,
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
     }
   }
 
