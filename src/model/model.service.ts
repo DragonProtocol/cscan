@@ -165,15 +165,8 @@ export default class ModelService {
   }
 
 
-  // Currently only support testnet.
-  async indexTopModelsForTestNet(topNum: number) {
-    try {
-      const modelMap = await this.getModelsByDecsPagination(
-        Network.TESTNET,
-        topNum,
-        1,
-      );
-
+  async indexModels(models: string[], network: Network): Promise<void> {
+    try { 
       // index new models
       const { CeramicClient } = await importDynamic(
         '@ceramicnetwork/http-client',
@@ -184,8 +177,8 @@ export default class ModelService {
       );
       const { getResolver } = await importDynamic('key-did-resolver');
       const { fromString } = await importDynamic('uint8arrays/from-string');
-      const ceramicNode = getCeramicNode(Network.TESTNET);
-      const ceramicNodeAdminKey = getCeramicNodeAdminKey(Network.TESTNET);
+      const ceramicNode = getCeramicNode(network);
+      const ceramicNodeAdminKey = getCeramicNodeAdminKey(network);
       const ceramic = new CeramicClient(ceramicNode);
       const privateKey = fromString(ceramicNodeAdminKey, 'base16');
       const did = new DID({
@@ -195,19 +188,13 @@ export default class ModelService {
       await did.authenticate();
       ceramic.did = did;
 
-      const indexedModels = await this.ceramicModelTestNetRepository.find({
-        where: { model: In(Array.from(modelMap.keys())) },
-      });
-      const indexedModelIds = indexedModels.map((m) => m.getModel);
-      for await (const m of modelMap) {
+      for await (const m of models) {
         try {
-          this.logger.log(`To index models, stream id:${m[0]}`);
-          if (indexedModelIds.includes(m[0])) continue;
-          this.logger.log(`Index models, stream id:${m[0]}`);
-          const res = await ceramic.admin.startIndexingModels([m[0]]);
-          this.logger.log(`Indexed model: ${m[0]}.`);
+          this.logger.log(`Index models, stream id:${m}`);
+          const res = await ceramic.admin.startIndexingModels([m]);
+          this.logger.log(`Indexed model: ${m}.`);
         } catch (error) {
-          this.logger.error(`Add model ${m[0]} index err: ${error}`);
+          this.logger.error(`Add model ${m} index err: ${error}`);
         }
       }
     } catch (error) {

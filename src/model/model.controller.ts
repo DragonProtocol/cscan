@@ -201,11 +201,10 @@ export class ModelController {
   }
 
   @Post('/indexing')
-  async indexModels(
-    @Query('num') num: number = 20000,
-  ): Promise<BasicMessageDto> {
-    this.logger.log(`Staring index ${num} models on testnet.`);
-    await this.modelService.indexTopModelsForTestNet(num);
+  async indexModels(@Query('model') model: string,
+    @Query('network') network: Network = Network.TESTNET,): Promise<BasicMessageDto> {
+    this.logger.log(`Starting index ${network} models ${models}.`);
+    await this.modelService.indexModels([model], network);
     return new BasicMessageDto('ok', 0);
   }
 
