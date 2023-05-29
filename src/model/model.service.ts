@@ -79,7 +79,7 @@ export default class ModelService {
       if (composite && runtimeDefinition && graphqlSchema){
         this.logger.log(`Getting model ${model} graph cache conposite ${JSON.parse(composite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
         return {
-          conposite: JSON.parse(composite),
+          composite: JSON.parse(composite),
           runtimeDefinition: JSON.parse(runtimeDefinition),
           graphqlSchema: graphqlSchema,
         };
