@@ -307,7 +307,14 @@ export class ModelController {
       throw new ServiceUnavailableException((e as Error).message);
     }
 
+    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+    const graphqlSchema = printGraphQLSchema(runtimeDefinition);
+
+    // cache the model graph info
+    // await this.modelService.saveModelGraphCache(, composite, runtimeDefinition, graphqlSchema);
+
     return new BasicMessageDto('ok', 0, {
+      graphqlSchema: graphqlSchema,
       composite: composite,
       runtimeDefinition: runtimeDefinition,
     });
@@ -320,7 +327,7 @@ export class ModelController {
       throw new BadRequestException('models\' length is not 1.');
     }
 
-    const graphCache = await this.modelService.getModelGraphCache(dto.models[0]);
+    const graphCache = await this.modelService.getModelGraphCache(dto.network, dto.models[0]);
     if (graphCache) {
       return new BasicMessageDto('ok', 0, graphCache);
     } else {
@@ -362,7 +369,7 @@ export class ModelController {
         console.timeEnd('buiding graphqlSchema');
 
         // cache the model graph info
-        await this.modelService.saveModelGraphCache(dto.models[0], composite, runtimeDefinition, graphqlSchema);
+        await this.modelService.saveModelGraphCache(dto.network, dto.models[0], composite, runtimeDefinition, graphqlSchema);
 
         return new BasicMessageDto('ok', 0, {
           composite,

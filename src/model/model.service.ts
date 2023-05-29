@@ -56,28 +56,28 @@ export default class ModelService {
     @InjectRedis() private readonly redis: Redis,
   ) { }
 
-  async saveModelGraphCache(model: string, composite: any,
+  async saveModelGraphCache(network: Network, model: string, composite: any,
     runtimeDefinition: any,
     graphqlSchema: any) {
     try {
       const pipeline = this.redis.pipeline();
-      pipeline.set(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model, JSON.stringify(composite));
-      pipeline.set(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + model, JSON.stringify(runtimeDefinition));
-      pipeline.set(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + model, graphqlSchema);
+      pipeline.set(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + network + ':' + model, JSON.stringify(composite));
+      pipeline.set(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + network + ':' + model, JSON.stringify(runtimeDefinition));
+      pipeline.set(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + network + ':' + model, graphqlSchema);
       const results = await pipeline.exec();
-      this.logger.log(`Saving model ${model} graph cache result ${results}`);
+      this.logger.log(`Saving ${network} model ${model} graph cache result ${results}`);
     } catch (error) {
-      this.logger.error(`Saving model ${model} graph cache err ${error}`);
+      this.logger.error(`Saving ${network} model ${model} graph cache err ${error}`);
     }
   }
 
-  async getModelGraphCache(model: string):Promise<any> {
+  async getModelGraphCache(network: Network, model: string):Promise<any> {
     try {
-      const composite = await this.redis.get(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model);
-      const runtimeDefinition = await this.redis.get(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + model);
-      const graphqlSchema = await this.redis.get(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + model);
+      const composite = await this.redis.get(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + network + ':' + model);
+      const runtimeDefinition = await this.redis.get(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + network + ':' + model);
+      const graphqlSchema = await this.redis.get(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + network + ':' + model);
       if (composite && runtimeDefinition && graphqlSchema){
-        this.logger.log(`Getting model ${model} graph cache conposite ${JSON.parse(composite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
+        this.logger.log(`Getting ${network} model ${model} graph cache conposite ${JSON.parse(composite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
         return {
           composite: JSON.parse(composite),
           runtimeDefinition: JSON.parse(runtimeDefinition),
@@ -86,7 +86,7 @@ export default class ModelService {
       }
       return;
     } catch (error) {
-      this.logger.error(`Getting model ${model} graph cache err ${error}`);
+      this.logger.error(`Getting ${network} model ${model} graph cache err ${error}`);
     }
   }
 
