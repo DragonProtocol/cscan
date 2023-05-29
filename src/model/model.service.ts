@@ -73,13 +73,13 @@ export default class ModelService {
 
   async getModelGraphCache(model: string):Promise<any> {
     try {
-      const conposite = await this.redis.get(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model);
+      const composite = await this.redis.get(S3_MODEL_GRAPHQL_COMPOSITE_CACHE_PREFIX + model);
       const runtimeDefinition = await this.redis.get(S3_MODEL_GRAPHQL_RUNTIMEDEFINITION_CACHE_PREFIX + model);
       const graphqlSchema = await this.redis.get(S3_MODEL_GRAPHQL_GRAPHQLSCHEMA_CACHE_PREFIX + model);
-      if (conposite && runtimeDefinition && graphqlSchema){
-        this.logger.log(`Getting model ${model} graph cache conposite ${JSON.parse(conposite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
+      if (composite && runtimeDefinition && graphqlSchema){
+        this.logger.log(`Getting model ${model} graph cache conposite ${JSON.parse(composite)},  runtimeDefinition ${JSON.parse(runtimeDefinition)},  graphqlSchema ${graphqlSchema}`);
         return {
-          conposite: JSON.parse(conposite),
+          conposite: JSON.parse(composite),
           runtimeDefinition: JSON.parse(runtimeDefinition),
           graphqlSchema: graphqlSchema,
         };
