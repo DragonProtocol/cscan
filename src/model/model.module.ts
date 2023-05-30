@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   CeramicModelMainNet,
   CeramicModelTestNet,
-  MetaModel,
+  MetaModelTestNet,
   MetaModelMainnet,
 } from '../entities/model/model.entity';
 import ModelService from './model.service';
@@ -12,7 +12,7 @@ import { StreamModule } from '../stream/stream.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MetaModel, CeramicModelTestNet], 'testnet'),
+    TypeOrmModule.forFeature([MetaModelTestNet, CeramicModelTestNet], 'testnet'),
     TypeOrmModule.forFeature([MetaModelMainnet, CeramicModelMainNet], 'mainnet'),
     forwardRef(() => StreamModule),
   ],

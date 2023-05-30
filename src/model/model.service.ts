@@ -3,14 +3,14 @@ import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import {
   CeramicModelMainNet,
   CeramicModelTestNet,
-  MetaModel,
+  MetaModelTestNet,
   MetaModelMainnet,
 } from '../entities/model/model.entity';
 import {
   CeramicModelMainNetRepository,
   CeramicModelTestNetRepository,
   MetaModelMainnetRepository,
-  MetaModelRepository,
+  MetaModelTestNetRepository,
 } from '../entities/model/model.repository';
 import { EntityManager, In, Repository } from 'typeorm';
 import { Network, Stream } from 'src/entities/stream/stream.entity';
@@ -35,8 +35,8 @@ export default class ModelService {
   private readonly logger = new Logger(ModelService.name);
 
   constructor(
-    @InjectRepository(MetaModel, 'testnet')
-    private readonly metaModelRepository: MetaModelRepository,
+    @InjectRepository(MetaModelTestNet, 'testnet')
+    private readonly metaModelRepository: MetaModelTestNetRepository,
 
     @InjectRepository(MetaModelMainnet, 'mainnet')
     private readonly metaModelMainnetRepository: MetaModelMainnetRepository,
@@ -270,7 +270,7 @@ export default class ModelService {
   async findModelsByIds(
     streamIds: string[],
     network: Network = Network.TESTNET,
-  ): Promise<MetaModel[] | MetaModelMainnet[]> {
+  ): Promise<MetaModelTestNet[] | MetaModelMainnet[]> {
     return this.getMetaModelRepository(network).find({
       where: { stream_id: In(streamIds) },
     });
@@ -303,7 +303,7 @@ export default class ModelService {
     description?: string,
     startTimeMs?: number,
     network?: Network,
-  ): Promise<MetaModel[] | MetaModelMainnet[]> {
+  ): Promise<MetaModelTestNet[] | MetaModelMainnet[]> {
     let whereSql = '';
     if (name?.trim().length > 0) {
       if (whereSql.length > 0) {
