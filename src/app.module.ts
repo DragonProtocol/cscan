@@ -9,15 +9,13 @@ import { ModelModule } from './model/model.module';
 import 'dotenv/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from './health/health.module';
+import { DappModule } from './dapp/dapp.module';
 
 
 const env: string | undefined = process.env.NODE_ENV;
 
 @Module({
   imports: [
-    // TypeOrmModule.forRootAsync({
-    //   useClass: DatabaseConfiguration,
-    // }),
     TypeOrmModule.forRoot({
       name: 'testnet',
       port: 5432,
@@ -70,6 +68,7 @@ const env: string | undefined = process.env.NODE_ENV;
     HealthModule,
     StreamModule,
     ModelModule,
+    DappModule,
     RedisModule.forRoot({
       config: {
         url: process.env.REDIS_URL,
