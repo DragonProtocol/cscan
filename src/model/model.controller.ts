@@ -391,7 +391,12 @@ export class ModelController {
       , this.streamService.findModelUseCount(dto.network, dto.ids)
       , this.modelService.findIndexedModelIds(dto.network, dto.ids)
     ]);
-
+    if (!models) {
+      throw new NotFoundException(new BasicMessageDto(`no models found for ids ${dto.ids}`, 0));
+    }
+    if (!indexedModelStreamIds) {
+      throw new NotFoundException(new BasicMessageDto(`no indexed models found for ids ${dto.ids}`, 0));
+    }
     const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
 
     models.forEach(e => {
