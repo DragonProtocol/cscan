@@ -12,8 +12,14 @@ import { StreamModule } from '../stream/stream.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MetaModelTestNet, CeramicModelTestNet], 'testnet'),
-    TypeOrmModule.forFeature([MetaModelMainnet, CeramicModelMainNet], 'mainnet'),
+    TypeOrmModule.forFeature(
+      [MetaModelTestNet, CeramicModelTestNet],
+      'testnet',
+    ),
+    TypeOrmModule.forFeature(
+      [MetaModelMainnet, CeramicModelMainNet],
+      'mainnet',
+    ),
     forwardRef(() => StreamModule),
   ],
   controllers: [ModelController],

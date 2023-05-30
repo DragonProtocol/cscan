@@ -65,7 +65,6 @@ export class Dapp extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   private last_modified_at: Date;
 
-
   get getId(): number {
     return this.id;
   }

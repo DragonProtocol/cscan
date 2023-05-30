@@ -11,7 +11,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from './health/health.module';
 import { DappModule } from './dapp/dapp.module';
 
-
 const env: string | undefined = process.env.NODE_ENV;
 
 @Module({

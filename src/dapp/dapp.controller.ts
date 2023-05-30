@@ -20,8 +20,5 @@ import DappService from './dapp.service';
 @Controller('/dapps')
 export class DappController {
   private readonly logger = new Logger(DappController.name);
-  constructor(
-    private readonly dappService: DappService,
-  ) {
-  }
+  constructor(private readonly dappService: DappService) {}
 }

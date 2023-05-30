@@ -93,7 +93,10 @@ export class ModelController {
 
       if (metaModels?.length == 0) return new BasicMessageDto('ok', 0, []);
       const modelStreamIds = metaModels.map((m) => m.getStreamId);
-      const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
+      const indexedModelStreamIds = await this.modelService.findIndexedModelIds(
+        network,
+        modelStreamIds,
+      );
       const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
 
       return new BasicMessageDto(
@@ -126,7 +129,10 @@ export class ModelController {
       modelStreamIds,
     );
 
-    const indexedModelStreamIds = await this.modelService.findIndexedModelIds(network, modelStreamIds)
+    const indexedModelStreamIds = await this.modelService.findIndexedModelIds(
+      network,
+      modelStreamIds,
+    );
     const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
     return new BasicMessageDto(
       'ok',
@@ -163,21 +169,36 @@ export class ModelController {
     if (!pageNumber || pageNumber == 0) pageNumber = 1;
     this.logger.log(`Seaching model(${modelStreamId})'s streams`);
 
-    const streams = await this.modelService.getStreams(network, modelStreamId, pageSize, pageNumber);
+    const streams = await this.modelService.getStreams(
+      network,
+      modelStreamId,
+      pageSize,
+      pageNumber,
+    );
     return new BasicMessageDto('ok', 0, streams);
   }
 
   @Get('/:modelStreamId/mids/:midStreamId')
   @ApiOkResponse({ type: BasicMessageDto })
-  async getMid(@Param('midStreamId') midStreamId: string,
+  async getMid(
+    @Param('midStreamId') midStreamId: string,
     @Query('network') network: Network = Network.TESTNET,
-    @Param('modelStreamId') modelStreamId: string,): Promise<BasicMessageDto> {
+    @Param('modelStreamId') modelStreamId: string,
+  ): Promise<BasicMessageDto> {
     this.logger.log(`Seaching mid(${midStreamId}) on network ${network}.`);
 
-    const mid = await this.modelService.getMid(network, modelStreamId, midStreamId);
+    const mid = await this.modelService.getMid(
+      network,
+      modelStreamId,
+      midStreamId,
+    );
     if (!mid) {
-      throw new NotFoundException(new BasicMessageDto(`midStreamId ${midStreamId} does not exist on network ${network}`, 0),
-      )
+      throw new NotFoundException(
+        new BasicMessageDto(
+          `midStreamId ${midStreamId} does not exist on network ${network}`,
+          0,
+        ),
+      );
     }
     return new BasicMessageDto('ok', 0, mid);
   }
@@ -201,8 +222,10 @@ export class ModelController {
   }
 
   @Post('/indexing')
-  async indexModels(@Query('model') model: string,
-    @Query('network') network: Network = Network.TESTNET,): Promise<BasicMessageDto> {
+  async indexModels(
+    @Query('model') model: string,
+    @Query('network') network: Network = Network.TESTNET,
+  ): Promise<BasicMessageDto> {
     this.logger.log(`Starting index ${network} models ${model}.`);
     await this.modelService.indexModels([model], network);
     return new BasicMessageDto('ok', 0);
@@ -324,10 +347,13 @@ export class ModelController {
   @Post('/graphql')
   async ModelIdToGraphql(@Body() dto: ModelIdToGaphqlDto) {
     if (dto.models?.length != 1) {
-      throw new BadRequestException('models\' length is not 1.');
+      throw new BadRequestException("models' length is not 1.");
     }
 
-    const graphCache = await this.modelService.getModelGraphCache(dto.network, dto.models[0]);
+    const graphCache = await this.modelService.getModelGraphCache(
+      dto.network,
+      dto.models[0],
+    );
     if (graphCache) {
       return new BasicMessageDto('ok', 0, graphCache);
     } else {
@@ -336,7 +362,9 @@ export class ModelController {
           '@ceramicnetwork/http-client',
         );
         const { Composite } = await importDynamic('@composedb/devtools');
-        const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+        const { printGraphQLSchema } = await importDynamic(
+          '@composedb/runtime',
+        );
         console.time('initing ceramic client');
         const ceramic = new CeramicClient(getCeramicNode(dto.network));
         console.timeEnd('initing ceramic client');
@@ -353,7 +381,11 @@ export class ModelController {
 
         // buid composite
         console.time('creating composite');
-        console.log('creating composite models:', dto.models, allModelStreamIds);
+        console.log(
+          'creating composite models:',
+          dto.models,
+          allModelStreamIds,
+        );
         const composite = await Composite.fromModels({
           ceramic: ceramic,
           models: [...dto.models, ...allModelStreamIds],
@@ -369,7 +401,13 @@ export class ModelController {
         console.timeEnd('buiding graphqlSchema');
 
         // cache the model graph info
-        await this.modelService.saveModelGraphCache(dto.network, dto.models[0], composite, runtimeDefinition, graphqlSchema);
+        await this.modelService.saveModelGraphCache(
+          dto.network,
+          dto.models[0],
+          composite,
+          runtimeDefinition,
+          graphqlSchema,
+        );
 
         return new BasicMessageDto('ok', 0, {
           composite,
@@ -384,24 +422,27 @@ export class ModelController {
 
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/ids')
-  async getModelsByIds(@Body() dto: { network: Network, ids: string[] }) {
-
+  async getModelsByIds(@Body() dto: { network: Network; ids: string[] }) {
     const [models, useCountMap, indexedModelStreamIds] = await Promise.all([
-      this.modelService.findModelsByIds(dto.ids, dto.network)
-      , this.streamService.findModelUseCount(dto.network, dto.ids)
-      , this.modelService.findIndexedModelIds(dto.network, dto.ids)
+      this.modelService.findModelsByIds(dto.ids, dto.network),
+      this.streamService.findModelUseCount(dto.network, dto.ids),
+      this.modelService.findIndexedModelIds(dto.network, dto.ids),
     ]);
     if (!models) {
-      throw new NotFoundException(new BasicMessageDto(`no models found for ids ${dto.ids}`, 0));
+      throw new NotFoundException(
+        new BasicMessageDto(`no models found for ids ${dto.ids}`, 0),
+      );
     }
     if (!indexedModelStreamIds) {
-      throw new NotFoundException(new BasicMessageDto(`no indexed models found for ids ${dto.ids}`, 0));
+      throw new NotFoundException(
+        new BasicMessageDto(`no indexed models found for ids ${dto.ids}`, 0),
+      );
     }
     const indexedModelStreamIdSet = new Set(indexedModelStreamIds);
 
-    models.forEach(e => {
-      e.useCount = useCountMap?.get(e.getStreamId) ?? 0,
-        e.isIndexed = indexedModelStreamIdSet.has(e.getStreamId);
+    models.forEach((e) => {
+      (e.useCount = useCountMap?.get(e.getStreamId) ?? 0),
+        (e.isIndexed = indexedModelStreamIdSet.has(e.getStreamId));
     });
 
     return new BasicMessageDto('ok', 0, models);
@@ -411,13 +452,18 @@ export class ModelController {
   @ApiOkResponse({ type: BasicMessageDto })
   async getModel(
     @Query('network') network: Network = Network.TESTNET,
-    @Param('modelStreamId') modelStreamId: string,): Promise<BasicMessageDto> {
+    @Param('modelStreamId') modelStreamId: string,
+  ): Promise<BasicMessageDto> {
     this.logger.log(`Seaching model(${modelStreamId}) on network ${network}.`);
 
     const mid = await this.modelService.getModel(network, modelStreamId);
     if (!mid) {
-      throw new NotFoundException(new BasicMessageDto(`modelStreamId ${modelStreamId} does not exist on network ${network}`, 0),
-      )
+      throw new NotFoundException(
+        new BasicMessageDto(
+          `modelStreamId ${modelStreamId} does not exist on network ${network}`,
+          0,
+        ),
+      );
     }
     return new BasicMessageDto('ok', 0, mid);
   }
