@@ -11,7 +11,7 @@ export default class CeramicSubscriberService {
   constructor(
     @InjectRepository(Stream, 'testnet')
     private readonly streamRepository: StreamRepository,
-  ) { }
+  ) {}
   async subCeramic(
     network: Network,
     bootstrapMultiaddrs: string[],
