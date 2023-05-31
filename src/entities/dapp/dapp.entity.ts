@@ -7,11 +7,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-export enum Network {
-  MAINNET = 'MAINNET',
-  TESTNET = 'TESTNET',
-}
-
 export class SocialLink {
   platform: string;
   url: string;
@@ -20,50 +15,53 @@ export class SocialLink {
 @Entity({ name: 'dapps' })
 export class Dapp extends BaseEntity {
   @PrimaryGeneratedColumn()
-  private id: number;
+  id: number;
 
   @Column({ nullable: true })
-  private name: string;
+  name: string;
 
   @Column({ nullable: true })
-  private description: string;
+  description: string;
 
   @Column({ nullable: true })
-  private icon: string;
+  icon: string;
 
   @Column({ nullable: true })
-  private url: string;
+  url: string;
+
+  @Column({ nullable: false, default: false })
+  is_deleted: boolean;
 
   @Index()
   @Column({ nullable: true })
-  private created_by_did: string;
+  created_by_did: string;
 
   @Column({
     type: 'jsonb',
-    array: true,
+    array: false,
     default: [],
   })
-  private social_link: SocialLink[];
+  social_links: SocialLink[];
 
   @Column({
     type: 'text',
     array: true,
     default: [],
   })
-  private tags: string[];
+  tags: string[];
 
   @Column({
     type: 'text',
     array: true,
     default: [],
   })
-  private models: string[];
+  models: string[];
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  private created_at: Date;
+  created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  private last_modified_at: Date;
+  last_modified_at: Date;
 
   get getId(): number {
     return this.id;
@@ -101,6 +99,13 @@ export class Dapp extends BaseEntity {
     this.url = url;
   }
 
+  get getIsDeleted(): boolean {
+    return this.is_deleted;
+  }
+  set setIsDeleted(isDeleted: boolean) {
+    this.is_deleted = isDeleted;
+  }
+
   get getCreatedByDid(): string {
     return this.created_by_did;
   }
@@ -108,11 +113,11 @@ export class Dapp extends BaseEntity {
     this.created_by_did = createdByDid;
   }
 
-  get getSocialLink(): SocialLink[] {
-    return this.social_link;
+  get getSocialLinks(): SocialLink[] {
+    return this.social_links;
   }
-  set setSocialLink(socialLink: SocialLink[]) {
-    this.social_link = socialLink;
+  set setSocialLinks(socialLinks: SocialLink[]) {
+    this.social_links = socialLinks;
   }
 
   get getTags(): string[] {

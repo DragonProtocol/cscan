@@ -14,18 +14,12 @@ import {
 
 @Injectable()
 export class UserAuthMiddleware implements NestMiddleware {
-  private checkSchemaAndReturnToken(header: string): string {
-    const splitTemp = header.split(' ');
-    if (splitTemp[0] !== 'Bearer') {
-      throw new UnauthorizedException(
-        new BasicMessageDto('Authorization Header Schema must be Bearer.', 1),
-      );
-    } else {
-      return splitTemp[1];
-    }
-  }
   async use(req: IUserRequest, res: Response, next: NextFunction) {
     const didSession = req.headers['did-session'];
+    if (!didSession)
+      throw new UnauthorizedException(
+        new BasicMessageDto('Unauthorized.', 1, 'did-session not found.'),
+      );
     if (didSession) {
       if (!(await verifyDidSession(didSession)))
         throw new BadRequestException(
