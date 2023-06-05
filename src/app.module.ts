@@ -23,6 +23,7 @@ const env: string | undefined = process.env.NODE_ENV;
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE,
       logging: true,
+      synchronize: true,
       entities: ['dist/**/dapp.entity{.ts,.js}'],
       type: 'postgres',
       pool: {

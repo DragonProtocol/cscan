@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SocialLink, Dapp } from 'src/entities/dapp/dapp.entity';
+import { Network } from '../../entities/model/model.entity';
 
 export class DappDto {
   @ApiProperty()
@@ -8,6 +9,12 @@ export class DappDto {
   name: string;
   @ApiProperty()
   description: string;
+  @ApiProperty()
+  stage: string;
+  @ApiProperty()
+  type: string;
+  @ApiProperty()
+  network: Network;
   @ApiProperty()
   icon: string;
   @ApiProperty()
@@ -34,6 +41,9 @@ export function convertToDappDto(dapp: Dapp): DappDto {
   dto.socialLinks = dapp.getSocialLinks;
   dto.tags = dapp.getTags;
   dto.models = dapp.getModels;
+  dto.stage = dapp.getStage;
+  dto.type = dapp.getType;
+  dto.network = dapp.getNetwork;
   dto.createdAt = dapp.getCreatedAt.getTime();
   dto.lastModifiedAt = dapp.getLastModifiedAt.getTime();
   return dto;
@@ -48,6 +58,9 @@ export function convertToDapp(dappDto: DappDto, did: string): Dapp {
   dapp.setUrl = dappDto.url;
   dapp.setSocialLinks = dappDto.socialLinks;
   dapp.setTags = dappDto.tags;
+  dapp.setStage = dappDto.stage;
+  dapp.setType = dappDto.type;
+  dapp.setNetwork = dappDto.network;
   dapp.setModels = dappDto.models;
   dapp.setCreatedByDid = did;
   return dapp;

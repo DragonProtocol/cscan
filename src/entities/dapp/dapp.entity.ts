@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Network } from '../stream/stream.entity';
 export class SocialLink {
   platform: string;
   url: string;
@@ -25,6 +26,16 @@ export class Dapp extends BaseEntity {
 
   @Column({ nullable: true })
   icon: string;
+
+  @Column({ nullable: true })
+  type: string;
+
+  @Column({ nullable: true })
+  stage: string;
+
+  @Index()
+  @Column({ nullable: true })
+  network: Network;
 
   @Column({ nullable: true })
   url: string;
@@ -89,6 +100,27 @@ export class Dapp extends BaseEntity {
   }
   set setIcon(icon: string) {
     this.icon = icon;
+  }
+
+  get getType(): string {
+    return this.type;
+  }
+  set setType(type: string) {
+    this.type = type;
+  }
+
+  get getStage(): string {
+    return this.stage;
+  }
+  set setStage(stage: string) {
+    this.stage = stage;
+  }
+
+  get getNetwork(): Network {
+    return this.network;
+  }
+  set setNetwork(network: Network) {
+    this.network = network;
   }
 
   get getUrl(): string {
