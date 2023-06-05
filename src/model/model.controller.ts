@@ -293,7 +293,7 @@ export class ModelController {
         this.logger.log(
           `Creating the composite... Done! The encoded representation:`,
         );
-        this.logger.log(composite);
+        this.logger.log(composite.toJSON());
       } catch (e) {
         this.logger.error((e as Error).message);
         this.logger.log(
