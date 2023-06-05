@@ -7,12 +7,14 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Network } from '../stream/stream.entity';
 export class SocialLink {
   platform: string;
   url: string;
 }
-
+export enum Network {
+  MAINNET = 'Mainnet',
+  TESTNET = 'Testnet',
+}
 @Entity({ name: 'dapps' })
 export class Dapp extends BaseEntity {
   @PrimaryGeneratedColumn()

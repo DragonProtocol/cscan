@@ -16,7 +16,7 @@ import {
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { BasicMessageDto } from '../common/dto';
 import DappService from './dapp.service';
-import { DappDto, convertToDapp } from './dtos/dapp.dto';
+import { DappDto, convertToDapp, convertToDappDto } from './dtos/dapp.dto';
 import IUserRequest from 'src/interfaces/user-request';
 
 @ApiTags('/dapps')
@@ -33,7 +33,7 @@ export class DappController {
     );
     const dapp = convertToDapp(dto, req.did);
     const savedDapp = await this.dappService.save(dapp);
-    return new BasicMessageDto('OK.', 0, savedDapp);
+    return new BasicMessageDto('OK.', 0, convertToDappDto(savedDapp));
   }
 
   @ApiOkResponse({ type: BasicMessageDto })
@@ -41,7 +41,11 @@ export class DappController {
   async findDappsByDid(@Req() req: IUserRequest) {
     this.logger.log(`Find dapps by did ${req.did}`);
     const dapps = await this.dappService.findDappsByDid(req.did);
-    return new BasicMessageDto('OK.', 0, dapps);
+    return new BasicMessageDto(
+      'OK.',
+      0,
+      dapps?.map((dapp) => convertToDappDto(dapp)),
+    );
   }
 
   @ApiOkResponse({ type: BasicMessageDto })

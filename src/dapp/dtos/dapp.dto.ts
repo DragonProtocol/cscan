@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SocialLink, Dapp } from 'src/entities/dapp/dapp.entity';
-import { Network } from '../../entities/model/model.entity';
+import { Network } from '../../entities/dapp/dapp.entity';
 
 export class DappDto {
   @ApiProperty()
