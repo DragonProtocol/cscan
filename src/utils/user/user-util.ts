@@ -11,7 +11,7 @@ export async function getDidStrFromDidSession(
 ): Promise<string> {
   const { DIDSession } = await importDynamic('did-session');
   const session = await DIDSession.fromSession(didSession);
-  return session.did.id;
+  return session.id;
 }
 
 export async function getCacaoFromDidSession(didSession: string): Promise<any> {
