@@ -7,7 +7,6 @@ export function parseToModelGraphqls(graphql: string): Map<string, string[]> {
     const ast = parse(graphql);
     if (!ast || ast.definitions.length == 0) return modelGraphqlsMap;
 
-    // generate  EnumTypeDefinition/ObjectTypeDefinition map
     const enumTypeDefinitionMap = new Map<string, any>();
     const objectTypeDefinitionMap = new Map<string, any>();
 
@@ -18,7 +17,14 @@ export function parseToModelGraphqls(graphql: string): Map<string, string[]> {
         if (definition.directives?.length > 0 && definition.directives[0].name.value == 'createModel') {
             const modelGraphqls = [];
             definition.fields.forEach((field: any) => {
-                // TODO
+                const typeName = field.type.type.name.value;
+                if (enumTypeDefinitionMap[typeName]){
+                    modelGraphqls.push(enumTypeDefinitionMap[typeName].loc.source.body.slice(enumTypeDefinitionMap[typeName].loc.start, enumTypeDefinitionMap[typeName].loc.end));
+                }else if (objectTypeDefinitionMap[typeName]){
+                    modelGraphqls.push(objectTypeDefinitionMap[typeName].loc.source.body.slice(objectTypeDefinitionMap[typeName].loc.start, objectTypeDefinitionMap[typeName].loc.end));
+                }else {
+                    // TODO: handle other type
+                }
             });
             modelGraphqls.push(definition.loc.source.body.slice(definition.loc.start, definition.loc.end));
             modelGraphqlsMap.set(name, modelGraphqls);
