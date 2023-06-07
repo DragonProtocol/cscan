@@ -44,8 +44,8 @@ export function convertToDappDto(dapp: Dapp): DappDto {
   dto.stage = dapp.getStage;
   dto.type = dapp.getType;
   dto.network = dapp.getNetwork;
-  dto.createdAt = dapp.getCreatedAt.getTime();
-  dto.lastModifiedAt = dapp.getLastModifiedAt.getTime();
+  dto.createdAt = dapp.getCreatedAt?.getTime();
+  dto.lastModifiedAt = dapp.getLastModifiedAt?.getTime();
   return dto;
 }
 
