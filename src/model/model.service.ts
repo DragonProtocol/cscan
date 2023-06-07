@@ -29,6 +29,7 @@ import {
   getCeramicNodeAdminKey,
   importDynamic,
 } from 'src/common/utils';
+import { get } from 'http';
 
 @Injectable()
 export default class ModelService {
@@ -85,6 +86,27 @@ export default class ModelService {
       this.logger.error(
         `Saving ${network} model ${model} graph cache err ${error}`,
       );
+    }
+  }
+
+  async storeModelGraphql(network: Network, modelStreamId: string, graphqls: string[]){
+    const redisKey = `s3:${network}:model:${modelStreamId}:graphqls`;
+    try {
+     const result = await this.redis.sadd(redisKey, ...graphqls);
+    this.logger.log(`Storing ${network} model ${modelStreamId} graphqls ${graphqls} result ${result}`);
+    } catch (error) {
+      this.logger.error(`Storing ${network} model ${modelStreamId} graphqls ${graphqls} err ${error}`);
+    }
+  }
+
+  async getModelGraphql(network: Network, modelStreamId: string): Promise<string[]>{
+    const redisKey = `s3:${network}:model:${modelStreamId}:graphqls`;
+    try {
+      const graphqls = await this.redis.smembers(redisKey);
+      this.logger.log(`Getting ${network} model ${modelStreamId} graphqls ${graphqls}`);
+      return graphqls;
+    } catch (error) {
+      this.logger.error(`Getting ${network} model ${modelStreamId} graphqls err ${error}`);
     }
   }
 
