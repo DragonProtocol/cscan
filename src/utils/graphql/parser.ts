@@ -14,22 +14,32 @@ export function parseToModelGraphqls(graphql: string): Map<string, string[]> {
     definitions.forEach((definition: any) => {
         const name = definition.name.value;
         const kand = definition.kind;
+        // currently only support createModel directive
         if (definition.directives?.length > 0 && definition.directives[0].name.value == 'createModel') {
             const modelGraphqls = [];
+            // iterate fields
             definition.fields.forEach((field: any) => {
-                const typeName = field.type.type.name.value;
-                if (enumTypeDefinitionMap[typeName]){
-                    modelGraphqls.push(enumTypeDefinitionMap[typeName].loc.source.body.slice(enumTypeDefinitionMap[typeName].loc.start, enumTypeDefinitionMap[typeName].loc.end));
-                }else if (objectTypeDefinitionMap[typeName]){
-                    modelGraphqls.push(objectTypeDefinitionMap[typeName].loc.source.body.slice(objectTypeDefinitionMap[typeName].loc.start, objectTypeDefinitionMap[typeName].loc.end));
-                }else {
-                    // TODO: handle other type
+                // parse object type
+                const objectTypeName = field.type?.name?.value;
+                if (objectTypeName){
+                    if (objectTypeDefinitionMap.get(objectTypeName)){
+                        modelGraphqls.push(objectTypeDefinitionMap.get(objectTypeName).loc.source.body.slice(objectTypeDefinitionMap.get(objectTypeName).loc.start, objectTypeDefinitionMap.get(objectTypeName).loc.end));
+                    }
+                }
+
+                // parse enum type
+                const enumTypeName = field.type?.type?.name?.value;
+                if (enumTypeName){
+                    if (enumTypeDefinitionMap.get(enumTypeName)){
+                        modelGraphqls.push(enumTypeDefinitionMap.get(enumTypeName).loc.source.body.slice(enumTypeDefinitionMap.get(enumTypeName).loc.start, enumTypeDefinitionMap.get(enumTypeName).loc.end));
+                    }
                 }
             });
             modelGraphqls.push(definition.loc.source.body.slice(definition.loc.start, definition.loc.end));
             modelGraphqlsMap.set(name, modelGraphqls);
         }
 
+        // build enum/object type definition map
         if (kand == 'EnumTypeDefinition') {
             enumTypeDefinitionMap.set(name, definition);
         }else if (kand == 'ObjectTypeDefinition') {
@@ -38,7 +48,6 @@ export function parseToModelGraphqls(graphql: string): Map<string, string[]> {
             // TODO: handle other kind
             console.log(`unknown kind: ${kand}`);
         }
-        
     });
     return modelGraphqlsMap;
 }
