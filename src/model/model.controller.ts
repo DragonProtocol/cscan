@@ -361,12 +361,18 @@ export class ModelController {
       throw new BadRequestException("models' length is not 1.");
     }
 
+    const graphqlSchemaDefinitionSet = await this.modelService.getModelGraphql(dto.network, dto.models[0]);
+    let graphqlSchemaDefinition;
+    if (graphqlSchemaDefinitionSet?.length > 0) {
+      graphqlSchemaDefinition = Array.from(graphqlSchemaDefinitionSet).join('\n');
+    }
+
     const graphCache = await this.modelService.getModelGraphCache(
       dto.network,
       dto.models[0],
     );
     if (graphCache) {
-      return new BasicMessageDto('ok', 0, graphCache);
+      return new BasicMessageDto('ok', 0, {...graphCache, graphqlSchemaDefinitionSet});
     } else {
       try {
         const { CeramicClient } = await importDynamic(
@@ -419,12 +425,6 @@ export class ModelController {
           runtimeDefinition,
           graphqlSchema,
         );
-
-        const graphqlSchemaDefinitionSet = await this.modelService.getModelGraphql(dto.network, dto.models[0]);
-        let graphqlSchemaDefinition;
-        if (graphqlSchemaDefinitionSet?.length > 0) {
-          graphqlSchemaDefinition = Array.from(graphqlSchemaDefinitionSet).join('\n');
-        }
         return new BasicMessageDto('ok', 0, {
           composite,
           runtimeDefinition,
