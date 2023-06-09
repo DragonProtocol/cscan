@@ -1,8 +1,8 @@
-import { parseToModelGraphqls } from "./parser";
+import { parseToCreateModelGraphqls } from "./parser";
 
 describe('parse schema to graphql', () => {
   it('Parse the graph', () => {
-    const modelGraphqls = parseToModelGraphqls(`
+    const modelGraphqls = parseToCreateModelGraphqls(`
       type Thread @loadModel(id: "kjzl6hvfrbw6cafpnfd031iecghmu2bfuhmm38jzf2pywnr3fsp8sh8ow93oihs") {
         id: ID!
       }

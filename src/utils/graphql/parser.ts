@@ -1,6 +1,6 @@
 import { parse } from 'graphql/language';
 
-export function parseToModelGraphqls(graphql: string): Map<string, string[]> {
+export function parseToCreateModelGraphqls(graphql: string): Map<string, string[]> {
     const modelGraphqlsMap = new Map<string, string[]>();
     if (!graphql || graphql.length == 0) return  modelGraphqlsMap
 
