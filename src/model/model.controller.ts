@@ -364,7 +364,7 @@ export class ModelController {
     const graphqlSchemaDefinitionSet = await this.modelService.getModelGraphql(dto.network, dto.models[0]);
     let graphqlSchemaDefinition;
     if (graphqlSchemaDefinitionSet?.length > 0) {
-      graphqlSchemaDefinition = Array.from(graphqlSchemaDefinitionSet).join('\n');
+      graphqlSchemaDefinition = graphqlSchemaDefinitionSet.reverse().join('\n');
     }
 
     const graphCache = await this.modelService.getModelGraphCache(
@@ -372,7 +372,7 @@ export class ModelController {
       dto.models[0],
     );
     if (graphCache) {
-      return new BasicMessageDto('ok', 0, {...graphCache, graphqlSchemaDefinitionSet});
+      return new BasicMessageDto('ok', 0, {...graphCache, graphqlSchemaDefinition});
     } else {
       try {
         const { CeramicClient } = await importDynamic(
