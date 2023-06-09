@@ -25,6 +25,7 @@ import {
   importDynamic,
 } from 'src/common/utils';
 import { Cron } from '@nestjs/schedule';
+import { parseToModelGraphqls } from 'src/utils/graphql/parser';
 
 @ApiTags('/models')
 @Controller('/models')
@@ -333,8 +334,18 @@ export class ModelController {
     const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
     const graphqlSchema = printGraphQLSchema(runtimeDefinition);
 
-    // cache the model graph info
-    // await this.modelService.saveModelGraphCache(, composite, runtimeDefinition, graphqlSchema);
+    // store the model graph 
+    const modelGraphqlsMap = parseToModelGraphqls(dto.graphql);
+    if (modelGraphqlsMap.size > 0) {
+      for await (const [model, graphqls] of modelGraphqlsMap) {
+        const modelStreamId = runtimeDefinition?.models[model].id;
+        await this.modelService.storeModelGraphql(
+          dto.network,
+          modelStreamId,
+          graphqls,
+        );
+      }
+    }
 
     return new BasicMessageDto('ok', 0, {
       graphqlSchema: graphqlSchema,
@@ -350,12 +361,18 @@ export class ModelController {
       throw new BadRequestException("models' length is not 1.");
     }
 
+    const graphqlSchemaDefinitionSet = await this.modelService.getModelGraphql(dto.network, dto.models[0]);
+    let graphqlSchemaDefinition;
+    if (graphqlSchemaDefinitionSet?.length > 0) {
+      graphqlSchemaDefinition = graphqlSchemaDefinitionSet.reverse().join('\n');
+    }
+
     const graphCache = await this.modelService.getModelGraphCache(
       dto.network,
       dto.models[0],
     );
     if (graphCache) {
-      return new BasicMessageDto('ok', 0, graphCache);
+      return new BasicMessageDto('ok', 0, {...graphCache, graphqlSchemaDefinition});
     } else {
       try {
         const { CeramicClient } = await importDynamic(
@@ -408,11 +425,11 @@ export class ModelController {
           runtimeDefinition,
           graphqlSchema,
         );
-
         return new BasicMessageDto('ok', 0, {
           composite,
           runtimeDefinition,
           graphqlSchema,
+          graphqlSchemaDefinition,
         });
       } catch (e) {
         throw new InternalServerErrorException(`ModelIdToGraphql: ${e}`);
