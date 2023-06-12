@@ -285,11 +285,17 @@ export class ModelController {
       // For creating model and load model graphql
       for await (const [model, graphqls] of createModelGraphqlsMap) {
         // Generate associated loading model graphql
-        graphqls.push(...generateLoadModelGraphqls( dto.graphql, model, modelStreamIdMap))
+        const schema :string[] = [];
+        const loadingGraphqls = generateLoadModelGraphqls( dto.graphql, model, modelStreamIdMap);
+        if (loadingGraphqls?.length > 0){
+          schema.push(...loadingGraphqls)
+        }
 
+        schema.push(...graphqls);
+        this.logger.log(`Creating ${model} ${schema} the composite...`);
         let composite = await Composite.create({
           ceramic: ceramic,
-          schema: graphqls,
+          schema: schema,
         });
         this.logger.log(
           `Creating ${model} the composite... Done! The encoded representation:${composite.toJSON()}`,

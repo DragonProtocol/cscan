@@ -14,6 +14,7 @@ export function parseToCreateModelGraphqls(graphql: string): Map<string, string[
     definitions.forEach((definition: any) => {
         const name = definition.name.value;
         const kand = definition.kind;
+        const directives = definition.directives;
         // currently only support createModel directive
         if (definition.directives?.length > 0 && definition.directives[0].name.value == 'createModel') {
             const modelGraphqls = [];
@@ -43,7 +44,9 @@ export function parseToCreateModelGraphqls(graphql: string): Map<string, string[
         if (kand == 'EnumTypeDefinition') {
             enumTypeDefinitionMap.set(name, definition);
         }else if (kand == 'ObjectTypeDefinition') {
-            objectTypeDefinitionMap.set(name, definition);
+            if (directives?.length > 0 && directives[0].name.value == 'loadModel'){
+                objectTypeDefinitionMap.set(name, definition);
+            }
         }else {
             // TODO: handle other kind
             console.log(`unknown kind: ${kand}`);
@@ -65,7 +68,6 @@ export function generateLoadModelGraphqls(sourceGraphql: string, targetModel: st
     const definitions = ast.definitions;
 
     definitions?.forEach((definition: any)=>{
-        console.log(`definition: ${JSON.stringify(definition)}`);
         definition?.fields?.forEach((field: any) => {
             if (field.type.kind == 'NamedType') {
                 const typeName = field.type.name.value;
