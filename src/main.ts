@@ -36,7 +36,6 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/20000/ws'],
     '/ceramic/testnet-clay',
-    // 'https://ceramic-clay.3boxlabs.com/'
     'https://gcp-ceramic-testnet.s3.xyz/',
   );
 
@@ -49,7 +48,6 @@ async function bootstrap() {
     ],
     ['/ip4/127.0.0.1/tcp/30000/ws'],
     '/ceramic/mainnet',
-    // 'https://gateway.ceramic.network/',
     'https://ceramic-us3r.hirenodes.io/',
   );
 }
