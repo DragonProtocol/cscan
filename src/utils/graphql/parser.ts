@@ -51,3 +51,35 @@ export function parseToCreateModelGraphqls(graphql: string): Map<string, string[
     });
     return modelGraphqlsMap;
 }
+
+export function generateLoadModelGraphqls(sourceGraphql: string, targetModel: string, modelStreamIdMap: Map<string, string>): string[] {
+    const loadModelGraphqls: string[] = [];
+    const modelGraphqlsMap = parseToCreateModelGraphqls(sourceGraphql);
+    if (modelGraphqlsMap.size == 0 ) return [];
+
+    const modelGraphqls = modelGraphqlsMap.get(targetModel);
+    if (!modelGraphqls || modelGraphqls?.length == 0) return [];
+
+    const createModelGraphql = modelGraphqls.find((modelGraphql: string) => modelGraphql.includes(`type ${targetModel} @createModel`));
+    const ast = parse(createModelGraphql);
+    const definitions = ast.definitions;
+
+    definitions?.forEach((definition: any)=>{
+        console.log(`definition: ${JSON.stringify(definition)}`);
+        definition?.fields?.forEach((field: any) => {
+            if (field.type.kind == 'NamedType') {
+                const typeName = field.type.name.value;
+                const streamId = modelStreamIdMap.get(typeName);
+                if (streamId) {
+                    const loadModelGraphql = `
+                    type ${typeName} @loadModel(id: "${streamId}") {
+                        id: ID!
+                      }`;
+                    loadModelGraphqls.push(loadModelGraphql);
+                }
+            }
+        });
+    });
+
+    return loadModelGraphqls;
+}

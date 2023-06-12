@@ -25,7 +25,7 @@ import {
   importDynamic,
 } from 'src/common/utils';
 import { Cron } from '@nestjs/schedule';
-import { parseToCreateModelGraphqls } from 'src/utils/graphql/parser';
+import { generateLoadModelGraphqls, parseToCreateModelGraphqls } from 'src/utils/graphql/parser';
 
 @ApiTags('/models')
 @Controller('/models')
@@ -253,7 +253,7 @@ export class ModelController {
       throw new BadRequestException('Graphql paramter is empty.');
     }
 
-    // 0 Login
+    // Login
     this.logger.log('Connecting to the our ceramic node...');
     const ceramic = new CeramicClient(ceramic_node);
     try {
@@ -277,22 +277,25 @@ export class ModelController {
       throw new ServiceUnavailableException((e as Error).message);
     }
 
-    //1 Create composites
+    // Create composites
     let composites = [];
     const createModelGraphqlsMap = parseToCreateModelGraphqls(dto.graphql);
+    const modelStreamIdMap = new Map<string, string>();
     if (createModelGraphqlsMap.size > 0) {
       // For creating model and load model graphql
-      for await (const [model, graphql] of createModelGraphqlsMap) {
-        // TODO generate associated loading model graphql
-        
+      for await (const [model, graphqls] of createModelGraphqlsMap) {
+        // Generate associated loading model graphql
+        graphqls.push(...generateLoadModelGraphqls( dto.graphql, model, modelStreamIdMap))
+
         let composite = await Composite.create({
           ceramic: ceramic,
-          schema: graphql,
+          schema: graphqls,
         });
         this.logger.log(
           `Creating ${model} the composite... Done! The encoded representation:${composite.toJSON()}`,
         );
         composites.push(composite);
+        modelStreamIdMap.set(model, composite.toRuntime()?.models[model].id);
       }
     } else {
       // For loading model graphql

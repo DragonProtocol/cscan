@@ -1,4 +1,4 @@
-import { parseToCreateModelGraphqls } from "./parser";
+import { generateLoadModelGraphqls, parseToCreateModelGraphqls } from "./parser";
 
 describe('parse schema to graphql', () => {
   it('Parse the graph', () => {
@@ -56,4 +56,48 @@ describe('parse schema to graphql', () => {
       }`);
   });
   
+});
+
+
+describe('generateLoadModelGraphqls', () => {
+  it('should generate loadModel graphqls', () => {
+    const sourceGraphql = `
+      type Thread @createModel(accountRelation: LIST, description: "Thread model") {
+        id: ID!
+      }
+      type Vote @createModel(accountRelation: LIST, description: "Vote model") {
+        thread: Thread @relationDocument(property: "threadID")
+        text: String! @string(maxLength: 2000)
+        value: Int!
+        date: DateTime
+      }
+    `;
+    const targetModel = 'Vote';
+    const modelStreamIdMap = new Map<string, string>([['Thread', 'abc123']]);
+    const loadModelGraphqls = generateLoadModelGraphqls(sourceGraphql, targetModel, modelStreamIdMap);
+    expect(loadModelGraphqls).toEqual([`
+                    type Thread @loadModel(id: "abc123") {
+                        id: ID!
+                      }`]);
+  });
+  
+  it('should return empty if modelGraphqlsMap is empty', () => {
+    const sourceGraphql = ``;
+    const targetModel = 'Vote';
+    const modelStreamIdMap = new Map<string, string>([['Thread', 'abc123']]);
+    const loadModelGraphqls = generateLoadModelGraphqls(sourceGraphql, targetModel, modelStreamIdMap);
+    expect(loadModelGraphqls).toEqual([]);
+  });
+  
+  it('should return empty if modelGraphqls is empty', () => {
+    const sourceGraphql = `
+      type Thread @createModel(accountRelation: LIST, description: "Thread model") {
+        id: ID!
+      }
+    `;
+    const targetModel = 'Vote';
+    const modelStreamIdMap = new Map<string, string>([['Thread', 'abc123']]);
+    const loadModelGraphqls = generateLoadModelGraphqls(sourceGraphql, targetModel, modelStreamIdMap);
+    expect(loadModelGraphqls).toEqual([]);
+  });
 });
