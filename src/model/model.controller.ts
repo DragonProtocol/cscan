@@ -292,6 +292,7 @@ export class ModelController {
         }
 
         schema.push(...graphqls);
+        createModelGraphqlsMap.set(model, schema);
         this.logger.log(`Creating ${model} ${schema} the composite...`);
         let composite = await Composite.create({
           ceramic: ceramic,
