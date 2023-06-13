@@ -363,7 +363,7 @@ export class ModelController {
     const graphqlSchemaDefinitionSet = await this.modelService.getModelGraphql(dto.network, dto.models[0]);
     let graphqlSchemaDefinition;
     if (graphqlSchemaDefinitionSet?.length > 0) {
-      graphqlSchemaDefinition = graphqlSchemaDefinitionSet.reverse().join('\n');
+      graphqlSchemaDefinition = graphqlSchemaDefinitionSet.join('\n');
     }
 
     const graphCache = await this.modelService.getModelGraphCache(
