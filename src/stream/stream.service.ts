@@ -250,7 +250,7 @@ export default class StreamService {
 
       console.time(`${network}-getStats`);
 
-      let [streams, modelStatistics] = await Promise.all([
+      let [streams, modelStatistics, totalCount] = await Promise.all([
         this.streamRepository
           .createQueryBuilder('streams')
           .select(['streams.id', 'streams.network', 'streams.created_at'])
@@ -261,6 +261,7 @@ export default class StreamService {
           .orderBy('created_at', 'DESC')
           .getMany(),
         this.modelService.getModelStatistics(network),
+        this.streamRepository.count( {where: { network: network} } )
       ]);
 
       console.timeEnd(`${network}-getStats`);
@@ -290,7 +291,7 @@ export default class StreamService {
         weeks[idx] += 1;
       }
 
-      dto.totalStreams = streams[0].getId;
+      dto.totalStreams = totalCount;
       dto.streamsPerHour = Math.floor((streams.length * 3600) / (t1 - t2));
       dto.streamsLastWeek = weeks;
 
