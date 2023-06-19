@@ -37,19 +37,23 @@ export async function verifyDidSession(didSession: string): Promise<boolean> {
   const { getSolanaVerifier } = await importDynamic('@didtools/pkh-solana');
   const { Cacao } = await importDynamic('@didtools/cacao');
 
-  const cacao = await getCacaoFromDidSession(didSession);
-  const cacaoAccount = await getAccountFromDidSession(didSession);
-  if (cacaoAccount[0] == AccountType.EVM) {
-    const verifiers = {
-      ...getEIP191Verifier(),
-    };
-    Cacao.verify(cacao, { verifiers });
-  } else if (cacaoAccount[0] == AccountType.SOLANA) {
-    const verifiers = {
-      ...getSolanaVerifier(),
-    };
-    Cacao.verify(cacao, { verifiers });
-  } else {
+  try {
+    const cacao = await getCacaoFromDidSession(didSession);
+    const cacaoAccount = await getAccountFromDidSession(didSession);
+    if (cacaoAccount[0] == AccountType.EVM) {
+      const verifiers = {
+        ...getEIP191Verifier(),
+      };
+      Cacao.verify(cacao, { verifiers });
+    } else if (cacaoAccount[0] == AccountType.SOLANA) {
+      const verifiers = {
+        ...getSolanaVerifier(),
+      };
+      Cacao.verify(cacao, { verifiers });
+    } else {
+      return false;
+    }
+  } catch (e) {
     return false;
   }
 

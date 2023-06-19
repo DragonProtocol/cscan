@@ -1,6 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SocialLink, Dapp } from 'src/entities/dapp/dapp.entity';
+import { SocialLink, Dapp, DappComposite } from 'src/entities/dapp/dapp.entity';
 import { Network } from '../../entities/dapp/dapp.entity';
+
+export class DappCompositeDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  dappId: number;
+  @ApiProperty()
+  composite: string;
+  @ApiProperty()
+  createdAt: number;
+  @ApiProperty()
+  lastModifiedAt: number;
+}
+
+export function convertToCompositeDto(composite: DappComposite): DappCompositeDto {
+  const dto = new DappCompositeDto();
+  dto.id = composite.getId;
+  dto.dappId = composite.getDappId;
+  dto.composite = composite.getComposite;
+  dto.createdAt = composite.getCreatedAt?.getTime();
+  dto.lastModifiedAt = composite.getLastModifiedAt?.getTime();
+  return dto;
+}
 
 export class DappDto {
   @ApiProperty()

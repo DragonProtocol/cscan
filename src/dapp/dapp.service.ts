@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Dapp } from 'src/entities/dapp/dapp.entity';
-import { DappRepository } from 'src/entities/dapp/dapp.repository';
+import { Dapp, DappComposite } from 'src/entities/dapp/dapp.entity';
+import { DappCompositeRepository, DappRepository } from 'src/entities/dapp/dapp.repository';
 
 @Injectable()
 export default class DappService {
@@ -10,6 +10,8 @@ export default class DappService {
   constructor(
     @InjectRepository(Dapp, 's3-server-db')
     private readonly dappRepository: DappRepository,
+    @InjectRepository(DappComposite, 's3-server-db')
+    private readonly dappCompositeRepository: DappCompositeRepository,
   ) {}
 
   async findDappsByDid(did: string): Promise<Dapp[]> {
@@ -26,6 +28,23 @@ export default class DappService {
     return await this.dappRepository.findOne({
       where: { id: id },
     });
+  }
+
+  async saveComposite(dappId: number, dappComposite: DappComposite): Promise<DappComposite> {
+    const dapp = await this.findDappById(dappId);
+    if (!dapp) throw new NotFoundException(`Dapp not found. id: ${dappId}`);
+
+    dappComposite.setDappId = dappId;
+    dappComposite.setLastModifiedAt = new Date();
+    return await this.dappCompositeRepository.save(dappComposite);
+  }
+
+  async findCompositesByDappId(dappId: number): Promise<DappComposite[]> {
+    return await this.dappCompositeRepository.find({dapp_id: dappId});
+  }
+
+  async deleteCompositeById(id: number): Promise<void> {
+    await this.dappCompositeRepository.update({ id: id }, { is_deleted: true });
   }
 
   async deleteDappById(id: number): Promise<void> {
