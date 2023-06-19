@@ -16,8 +16,9 @@ import {
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { BasicMessageDto } from '../common/dto';
 import DappService from './dapp.service';
-import { DappDto, convertToDapp, convertToDappDto } from './dtos/dapp.dto';
+import { DappCompositeDto, DappDto, convertToCompositeDto, convertToDapp, convertToDappDto } from './dtos/dapp.dto';
 import IUserRequest from 'src/interfaces/user-request';
+import { DappComposite } from 'src/entities/dapp/dapp.entity';
 
 @ApiTags('/dapps')
 @Controller('/dapps')
@@ -59,6 +60,50 @@ export class DappController {
         `Dapp did not match. dapp.did: ${dapp.getCreatedByDid}, req.did: ${req.did}`,
       );
     await this.dappService.deleteDappById(+id);
+    return new BasicMessageDto('OK.', 0);
+  }
+
+
+  @ApiOkResponse({ type: BasicMessageDto })
+  @Post('/:dappId/composites')
+  async saveComposite(@Req() req: IUserRequest, @Param('dappId') dappId: string, @Body() dto: DappCompositeDto) {
+    this.logger.log(
+      `Save req did ${req.did} dapp. dto: ${JSON.stringify(dto)}`,
+    );
+    
+    const dappComposite = new DappComposite();
+    dappComposite.setComposite = dto.composite;
+    const savedDappComposite = await this.dappService.saveComposite(+dappId, dappComposite);
+    return new BasicMessageDto('OK.', 0, convertToCompositeDto(savedDappComposite));
+  }
+
+  @ApiOkResponse({ type: BasicMessageDto })
+  @Get('/:dappId/composites')
+  async findCompositesByDappId(@Req() req: IUserRequest, @Param('dappId') dappId: string) {
+    this.logger.log(`Find composites by dappId ${dappId}`);
+    const dapp = await this.dappService.findDappById(+dappId);
+    if (!dapp) throw new NotFoundException(`Dapp not found. id: ${dappId}`);
+
+    const composites = await this.dappService.findCompositesByDappId(+dappId);
+    return new BasicMessageDto(
+      'OK.',
+      0,
+      composites?.map((composite) => convertToCompositeDto(composite))??[],
+    );
+  }
+
+  @ApiOkResponse({ type: BasicMessageDto })
+  @Delete('/:dappId/composites/:id')
+  async deleteCompositeById(@Req() req: IUserRequest, @Param('dappId') dappId: string, @Param('id') id: string) {
+    this.logger.log(`Delete composite by id ${id}`);
+    const dapp = await this.dappService.findDappById(+dappId);
+    if (!dapp) throw new NotFoundException(`Dapp not found. id: ${dappId}`);
+    if (dapp.getCreatedByDid !== req.did)
+      throw new BadRequestException(
+        `Dapp did not match. dapp.did: ${dapp.getCreatedByDid}, req.did: ${req.did}`,
+      );
+
+    await this.dappService.deleteCompositeById(+id);
     return new BasicMessageDto('OK.', 0);
   }
 }

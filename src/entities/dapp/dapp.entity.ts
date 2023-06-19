@@ -182,3 +182,67 @@ export class Dapp extends BaseEntity {
     this.last_modified_at = LastModifiedAt;
   }
 }
+
+@Entity({ name: 'dapp_composites' })
+export class DappComposite extends BaseEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index()
+  @Column({ nullable: true })
+  dapp_id: number;
+
+  @Column({ nullable: true })
+  composite: string;
+
+  @Column({ nullable: false, default: false })
+  is_deleted: boolean;
+
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  last_modified_at: Date;
+
+  get getId(): number {
+    return this.id;
+  }
+  set setId(id: number) {
+    this.id = id;
+  }
+
+  get getIsDeleted(): boolean {
+    return this.is_deleted;
+  }
+  set setIsDeleted(isDeleted: boolean) {
+    this.is_deleted = isDeleted;
+  }
+
+  get getComposite(): string {
+    return this.composite;
+  }
+  set setComposite(composite: string) {
+    this.composite = composite;
+  }
+ 
+  get getDappId(): number {
+    return this.dapp_id;
+  }
+  set setDappId(dappId: number) {
+    this.dapp_id = dappId;
+  }
+
+  get getCreatedAt(): Date {
+    return this.created_at;
+  }
+  set setCreatedAt(createdAt: Date) {
+    this.created_at = createdAt;
+  }
+
+  get getLastModifiedAt(): Date {
+    return this.last_modified_at;
+  }
+  set setLastModifiedAt(LastModifiedAt: Date) {
+    this.last_modified_at = LastModifiedAt;
+  }
+}
