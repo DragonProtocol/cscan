@@ -19,12 +19,13 @@ import DappService from './dapp.service';
 import { DappCompositeDto, DappDto, convertToCompositeDto, convertToDapp, convertToDappDto } from './dtos/dapp.dto';
 import IUserRequest from 'src/interfaces/user-request';
 import { DappComposite } from 'src/entities/dapp/dapp.entity';
+import ModelService from 'src/model/model.service';
 
 @ApiTags('/dapps')
 @Controller('/dapps')
 export class DappController {
   private readonly logger = new Logger(DappController.name);
-  constructor(private readonly dappService: DappService) { }
+  constructor(private readonly dappService: DappService, private readonly modelService: ModelService) { }
 
   @ApiOkResponse({ type: BasicMessageDto })
   @Post('/')
@@ -70,10 +71,15 @@ export class DappController {
     this.logger.log(
       `Save req did ${req.did} dapp. dto: ${JSON.stringify(dto)}`,
     );
+    const dapp = await this.dappService.findDappById(+dappId);
+    if (!dapp) throw new NotFoundException(`Dapp not found. id: ${dappId}`);
+    const compositeInfo = await this.modelService.createAndDeployModel({network: dapp.getNetwork, graphql: dto.graphql})
 
     const dappComposite = new DappComposite();
-    dappComposite.setComposite = dto.composite;
+    dappComposite.setComposite = compositeInfo.composite;
     dappComposite.setName = dto.name;
+    dappComposite.setGraphql = dto.graphql;
+    dappComposite.setRuntimeDefinition = compositeInfo.runtimeDefinition;
     const savedDappComposite = await this.dappService.saveComposite(+dappId, dappComposite);
     return new BasicMessageDto('OK.', 0, convertToCompositeDto(savedDappComposite));
   }

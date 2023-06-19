@@ -4,9 +4,10 @@ import { DappController } from './dapp.controller';
 import { Dapp, DappComposite } from 'src/entities/dapp/dapp.entity';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserAuthMiddleware } from 'src/middlewares/user-auth.middleware';
+import { ModelModule } from 'src/model/model.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Dapp, DappComposite], 's3-server-db')],
+  imports: [TypeOrmModule.forFeature([Dapp, DappComposite], 's3-server-db'), ModelModule],
   controllers: [DappController],
   providers: [DappService],
   exports: [DappService],

@@ -196,7 +196,13 @@ export class DappComposite extends BaseEntity {
   name: string;
 
   @Column({ nullable: true })
+  graphql: string;
+
+  @Column({ nullable: true })
   composite: string;
+
+  @Column({ nullable: true })
+  runtime_definition: string;
 
   @Column({ nullable: false, default: false })
   is_deleted: boolean;
@@ -219,6 +225,20 @@ export class DappComposite extends BaseEntity {
   }
   set setIsDeleted(isDeleted: boolean) {
     this.is_deleted = isDeleted;
+  }
+
+  get getRuntimeDefinition(): string {
+    return this.runtime_definition;
+  }
+  set setRuntimeDefinition(runtimeDefinition: string) {
+    this.runtime_definition = runtimeDefinition;
+  }
+
+  get getGraphql(): string {
+    return this.graphql;
+  }
+  set setGraphql(graphql: string) {
+    this.graphql = graphql;
   }
 
   get getComposite(): string {

@@ -12,6 +12,10 @@ export class DappCompositeDto {
   @ApiProperty()
   composite: string;
   @ApiProperty()
+  graphql: string;
+  @ApiProperty()
+  runtimeDefinition: string;
+  @ApiProperty()
   createdAt: number;
   @ApiProperty()
   lastModifiedAt: number;
@@ -22,7 +26,9 @@ export function convertToCompositeDto(composite: DappComposite): DappCompositeDt
   dto.id = composite.getId;
   dto.dappId = composite.getDappId;
   dto.name = composite.getName;
+  dto.graphql = composite.getGraphql;
   dto.composite = composite.getComposite;
+  dto.runtimeDefinition = composite.getRuntimeDefinition;
   dto.createdAt = composite.getCreatedAt?.getTime();
   dto.lastModifiedAt = composite.getLastModifiedAt?.getTime();
   return dto;

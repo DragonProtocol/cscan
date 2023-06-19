@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import {
   CeramicModelMainNet,
@@ -30,6 +30,8 @@ import {
   importDynamic,
 } from 'src/common/utils';
 import { get } from 'http';
+import { CreateModelDto } from './dtos/model.dto';
+import { generateLoadModelGraphqls, parseToCreateModelGraphqls } from 'src/utils/graphql/parser';
 
 @Injectable()
 export default class ModelService {
@@ -55,7 +57,7 @@ export default class ModelService {
     private mainnetCeramicEntityManager: EntityManager,
 
     @InjectRedis() private readonly redis: Redis,
-  ) {}
+  ) { }
 
   async saveModelGraphCache(
     network: Network,
@@ -89,17 +91,17 @@ export default class ModelService {
     }
   }
 
-  async storeModelGraphql(network: Network, modelStreamId: string, graphqls: string[]){
+  async storeModelGraphql(network: Network, modelStreamId: string, graphqls: string[]) {
     const redisKey = `s3:${network}:model:${modelStreamId}:graphqls`;
     try {
-     const result = await this.redis.sadd(redisKey, ...graphqls);
-    this.logger.log(`Storing ${network} model ${modelStreamId} graphqls ${graphqls} result ${result}`);
+      const result = await this.redis.sadd(redisKey, ...graphqls);
+      this.logger.log(`Storing ${network} model ${modelStreamId} graphqls ${graphqls} result ${result}`);
     } catch (error) {
       this.logger.error(`Storing ${network} model ${modelStreamId} graphqls ${graphqls} err ${error}`);
     }
   }
 
-  async getModelGraphql(network: Network, modelStreamId: string): Promise<string[]>{
+  async getModelGraphql(network: Network, modelStreamId: string): Promise<string[]> {
     const redisKey = `s3:${network}:model:${modelStreamId}:graphqls`;
     try {
       const graphqls = await this.redis.smembers(redisKey);
@@ -107,6 +109,124 @@ export default class ModelService {
       return graphqls;
     } catch (error) {
       this.logger.error(`Getting ${network} model ${modelStreamId} graphqls err ${error}`);
+    }
+  }
+
+  async createAndDeployModel(dto: CreateModelDto, didSession?: string): Promise<any> {
+    const ceramic_node = getCeramicNode(dto.network);
+    const ceramic_node_admin_key = getCeramicNodeAdminKey(dto.network);
+    const { CeramicClient } = await importDynamic(
+      '@ceramicnetwork/http-client',
+    );
+    const { Composite } = await importDynamic('@composedb/devtools');
+    const { DID } = await importDynamic('dids');
+    const { Ed25519Provider } = await importDynamic('key-did-provider-ed25519');
+    const { getResolver } = await importDynamic('key-did-resolver');
+    const { fromString } = await importDynamic('uint8arrays/from-string');
+
+    // TODO  verify the syntax of the graphql paramter.
+    this.logger.log(`Create and deploy model, graphql: ${dto.graphql}`);
+    if (!dto.graphql || dto.graphql.length == 0) {
+      this.logger.error('Graphql paramter is empty.');
+      throw new BadRequestException('Graphql paramter is empty.');
+    }
+
+    // Login
+    this.logger.log('Connecting to the our ceramic node...');
+    const ceramic = new CeramicClient(ceramic_node);
+    try {
+      if (didSession) {
+        const { DIDSession } = await importDynamic('did-session');
+        const session = await DIDSession.fromSession(didSession);
+        ceramic.did = session.did;
+      } else {
+        const privateKey = fromString(ceramic_node_admin_key, 'base16');
+        const did = new DID({
+          resolver: getResolver(),
+          provider: new Ed25519Provider(privateKey),
+        });
+        await did.authenticate();
+        ceramic.did = did;
+      }
+      this.logger.log('Connected to the our ceramic node!');
+    } catch (e) {
+      this.logger.error((e as Error).message);
+      throw new ServiceUnavailableException((e as Error).message);
+    }
+
+    // Create composites
+    let composites = [];
+    const createModelGraphqlsMap = parseToCreateModelGraphqls(dto.graphql);
+    const modelStreamIdMap = new Map<string, string>();
+    if (createModelGraphqlsMap.size > 0) {
+      // For creating model and load model graphql
+      for await (const [model, graphqls] of createModelGraphqlsMap) {
+        // Generate associated loading model graphql
+        const schema: string[] = [];
+        const loadingGraphqls = generateLoadModelGraphqls(dto.graphql, model, modelStreamIdMap);
+        if (loadingGraphqls?.length > 0) {
+          schema.push(...loadingGraphqls)
+        }
+
+        schema.push(...graphqls);
+        createModelGraphqlsMap.set(model, schema);
+        this.logger.log(`Creating ${model} ${schema} the composite...`);
+        let composite = await Composite.create({
+          ceramic: ceramic,
+          schema: schema,
+        });
+        this.logger.log(
+          `Creating ${model} the composite... Done! The encoded representation:${composite.toJSON()}`,
+        );
+        composites.push(composite);
+        modelStreamIdMap.set(model, composite.toRuntime()?.models[model].id);
+      }
+    } else {
+      // For loading model graphql
+      let composite = await Composite.create({
+        ceramic: ceramic,
+        schema: dto.graphql,
+      });
+      this.logger.log(
+        `Creating the composite... Done! The encoded representation:${composite.toJSON()}`,
+      );
+      composites.push(composite);
+    }
+
+    // Merge composites
+    const mergedComposite = Composite.from(composites);
+
+    // Compile composites
+    let runtimeDefinition;
+    try {
+      this.logger.log('Compiling the composite...');
+      runtimeDefinition = mergedComposite.toRuntime();
+      this.logger.log(JSON.stringify(runtimeDefinition));
+      this.logger.log(`Compiling the composite... Done!`);
+    } catch (e) {
+      this.logger.error((e as Error).message);
+      throw new ServiceUnavailableException((e as Error).message);
+    }
+
+    const { printGraphQLSchema } = await importDynamic('@composedb/runtime');
+    const graphqlSchema = printGraphQLSchema(runtimeDefinition);
+
+    // Store the model graphs 
+    if (createModelGraphqlsMap.size > 0) {
+      for await (const [model, graphqls] of createModelGraphqlsMap) {
+        const modelStreamId = runtimeDefinition?.models[model].id;
+        await this.storeModelGraphql(
+          dto.network,
+          modelStreamId,
+          graphqls,
+        );
+      }
+    }
+
+    return {
+      graphqlSchema: graphqlSchema,
+      composite: mergedComposite,
+      runtimeDefinition: runtimeDefinition,
     }
   }
 
@@ -157,8 +277,7 @@ export default class ModelService {
     let mids = [];
     try {
       mids = await ceramicEntityManager.query(
-        `select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${
-          pageSize * (pageNumber - 1)
+        `select * from ${modelStreamId} order by created_at DESC limit ${pageSize} offset ${pageSize * (pageNumber - 1)
         }`,
       );
     } catch (error) {
