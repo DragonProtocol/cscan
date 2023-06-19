@@ -40,7 +40,7 @@ export default class DappService {
   }
 
   async findCompositesByDappId(dappId: number): Promise<DappComposite[]> {
-    return await this.dappCompositeRepository.find({dapp_id: dappId});
+    return await this.dappCompositeRepository.find({dapp_id: dappId, is_deleted: false});
   }
 
   async deleteCompositeById(id: number): Promise<void> {
