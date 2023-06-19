@@ -8,6 +8,8 @@ export class DappCompositeDto {
   @ApiProperty()
   dappId: number;
   @ApiProperty()
+  name: string;
+  @ApiProperty()
   composite: string;
   @ApiProperty()
   createdAt: number;
@@ -19,6 +21,7 @@ export function convertToCompositeDto(composite: DappComposite): DappCompositeDt
   const dto = new DappCompositeDto();
   dto.id = composite.getId;
   dto.dappId = composite.getDappId;
+  dto.name = composite.getName;
   dto.composite = composite.getComposite;
   dto.createdAt = composite.getCreatedAt?.getTime();
   dto.lastModifiedAt = composite.getLastModifiedAt?.getTime();

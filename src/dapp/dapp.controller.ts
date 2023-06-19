@@ -70,9 +70,10 @@ export class DappController {
     this.logger.log(
       `Save req did ${req.did} dapp. dto: ${JSON.stringify(dto)}`,
     );
-    
+
     const dappComposite = new DappComposite();
     dappComposite.setComposite = dto.composite;
+    dappComposite.setName = dto.name;
     const savedDappComposite = await this.dappService.saveComposite(+dappId, dappComposite);
     return new BasicMessageDto('OK.', 0, convertToCompositeDto(savedDappComposite));
   }
@@ -88,7 +89,7 @@ export class DappController {
     return new BasicMessageDto(
       'OK.',
       0,
-      composites?.map((composite) => convertToCompositeDto(composite))??[],
+      composites?.map((composite) => convertToCompositeDto(composite)) ?? [],
     );
   }
 

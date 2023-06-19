@@ -193,6 +193,9 @@ export class DappComposite extends BaseEntity {
   dapp_id: number;
 
   @Column({ nullable: true })
+  name: string;
+
+  @Column({ nullable: true })
   composite: string;
 
   @Column({ nullable: false, default: false })
@@ -230,6 +233,13 @@ export class DappComposite extends BaseEntity {
   }
   set setDappId(dappId: number) {
     this.dapp_id = dappId;
+  }
+
+  get getName(): string {
+    return this.name;
+  }
+  set setName(name: string) {
+    this.name = name;
   }
 
   get getCreatedAt(): Date {
